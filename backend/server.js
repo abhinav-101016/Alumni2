@@ -7,12 +7,12 @@ import authRoutes from './routes/auth.js';
 
 dotenv.config();
 
-
+const app = express();
 app.use(cors({
   origin: 'https://alumni2-phi.vercel.app',
   credentials: true, // if you want to send cookies/auth headers
 }));
-const app = express();
+
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
