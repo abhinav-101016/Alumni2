@@ -1,10 +1,10 @@
 "use client";
 export const dynamic = "force-dynamic";
+
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function VerifyEmail() {
-  const searchParams = useSearchParams();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -12,17 +12,20 @@ export default function VerifyEmail() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Get email from query param or sessionStorage
+  // Get email from query string or sessionStorage (only in browser)
   useEffect(() => {
-    const queryEmail = searchParams.get("email");
+    const params = new URLSearchParams(window.location.search);
+    const queryEmail = params.get("email");
     const storedEmail = sessionStorage.getItem("verifyEmail");
 
     if (queryEmail) setEmail(queryEmail);
     else if (storedEmail) setEmail(storedEmail);
-  }, [searchParams]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email) return setMessage("❌ No email provided.");
+
     setLoading(true);
     setMessage("");
 
@@ -32,7 +35,7 @@ export default function VerifyEmail() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp })
+          body: JSON.stringify({ email, otp }),
         }
       );
 
@@ -41,7 +44,6 @@ export default function VerifyEmail() {
 
       setMessage("✅ Email verified successfully! Redirecting to login...");
       setTimeout(() => router.push("/login"), 2000);
-
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -50,17 +52,20 @@ export default function VerifyEmail() {
   };
 
   const handleResend = async () => {
+    if (!email) return setMessage("❌ No email provided.");
     setLoading(true);
     setMessage("");
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/resend-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
+          body: JSON.stringify({ email }),
         }
       );
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Resend failed");
       setMessage("✅ OTP resent. Check your email.");
@@ -73,13 +78,13 @@ export default function VerifyEmail() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-white px-4 py-12">
-      {/* Smaller width container */}
       <div className="w-full sm:w-96 md:w-80 lg:w-96 bg-white border border-slate-200 shadow-sm rounded-sm p-8">
         <h2 className="text-2xl font-black text-black uppercase tracking-tighter text-center mb-4">
           Verify Your Email
         </h2>
         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center mb-6">
-          Enter the OTP sent to <span className="text-[#951114]">{email}</span>
+          Enter the OTP sent to{" "}
+          <span className="text-[#951114]">{email || "[No Email]"}</span>
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
