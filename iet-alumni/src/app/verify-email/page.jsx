@@ -26,20 +26,23 @@ export default function VerifyEmail() {
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp })
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/verify-email`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp })
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "OTP verification failed");
 
-      setMessage("Email verified successfully! Redirecting to login...");
+      setMessage("✅ Email verified successfully! Redirecting to login...");
       setTimeout(() => router.push("/login"), 2000);
 
     } catch (err) {
-      setMessage("Error! " + err.message);
+      setMessage("❌ " + err.message);
     } finally {
       setLoading(false);
     }
@@ -49,16 +52,19 @@ export default function VerifyEmail() {
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/resend-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/resend-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        }
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Resend failed");
-      setMessage("OTP resent. Check your email.");
+      setMessage("✅ OTP resent. Check your email.");
     } catch (err) {
-      setMessage("Error!" + err.message);
+      setMessage("❌ " + err.message);
     } finally {
       setLoading(false);
     }
