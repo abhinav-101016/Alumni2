@@ -63,7 +63,7 @@ export default function Login() {
               />
               <div className="text-right">
                 <Link 
-                  href="/forgot-password" 
+                  href="/" 
                   className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-[#951114] transition-colors"
                 >
                   Forgot Password?
