@@ -10,13 +10,15 @@ dotenv.config();
 const app = express();
 
 
+
+
 app.use(cors({
   origin: "https://alumni2-phi.vercel.app",
-  methods: ["GET","POST","PUT","DELETE"],
-  credentials: true
+  credentials: true,
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"]
 }));
 app.options("*", cors());
-
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
