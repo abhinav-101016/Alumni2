@@ -8,10 +8,14 @@ import authRoutes from './routes/auth.js';
 dotenv.config();
 
 const app = express();
+
+
 app.use(cors({
-  origin: 'https://alumni2-phi.vercel.app',
-  credentials: true, // if you want to send cookies/auth headers
+  origin: "https://alumni2-phi.vercel.app",
+  methods: ["GET","POST","PUT","DELETE"],
+  credentials: true
 }));
+app.options("*", cors());
 
 // JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
@@ -38,7 +42,7 @@ const requireRole = (roles) => (req, res, next) => {
 };
 
 // Middleware
-app.use(cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
