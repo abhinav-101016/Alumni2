@@ -40,7 +40,6 @@ export const sendVerificationEmail = async (email, otp) => {
     console.log('Email sent successfully:', info.messageId);
     return info;
   } catch (error) {
-    console.error('Email send failed:', error.message);
-    throw error;
+    return false;
   }
 };
