@@ -11,6 +11,9 @@ const app = express();
 
 
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 app.use(cors({
   origin: "https://alumni2-phi.vercel.app",
@@ -44,9 +47,6 @@ const requireRole = (roles) => (req, res, next) => {
 };
 
 // Middleware
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // MongoDB
 mongoose.connect(process.env.MONGODB_URI)
