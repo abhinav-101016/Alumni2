@@ -3,18 +3,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  host: process.env.EMAIL_HOST,
   port: 587,
-  secure: false,
+  secure: false, // TLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
   }
 });
-
 export const sendVerificationEmail = async (email, otp) => {
   const mailOptions = {
     from: `"Alumni Portal" <${process.env.EMAIL_USER}>`,
