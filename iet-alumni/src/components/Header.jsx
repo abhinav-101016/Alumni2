@@ -4,17 +4,37 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Menu, X, ChevronDown, ArrowRight, Gift, Search, Plus, Minus } from "lucide-react"
+import { Menu, X, ChevronDown, ArrowRight, Gift, Search, Plus, Minus, User } from "lucide-react"
 import "@fontsource/playfair-display/700.css"
 
 export default function Header() {
   const router = useRouter()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(null)
   const [hoverNav, setHoverNav] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(null)
+  useEffect(() => {
+  const checkLogin = () => {
+    const token = localStorage.getItem("token")
+    setIsLoggedIn(!!token)
+  }
 
+  // Check on mount
+  checkLogin()
+
+  // Listen for storage updates
+  window.addEventListener("storage", checkLogin)
+
+  // Custom event for same-tab updates
+  window.addEventListener("authChange", checkLogin)
+
+  return () => {
+    window.removeEventListener("storage", checkLogin)
+    window.removeEventListener("authChange", checkLogin)
+  }
+}, [])
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
     window.addEventListener("scroll", handleScroll)
@@ -39,7 +59,9 @@ export default function Header() {
     "Executive Committee", 
     "Advisory Committee"
   ];
-
+  const handleProfileClick = () => {
+  router.push('/dashboard')
+}
   // LOGIC: Maps links to /committee/executive-committee, etc.
   const getRoute = (link) => {
     const slug = link.toLowerCase().replace(/\s+/g, '-');
@@ -70,7 +92,21 @@ export default function Header() {
       {/* TOP UTILITY BAR */}
       <div className={`hidden md:block bg-white text-blue-600 text-[14px] transition-all duration-500 ease-in-out overflow-hidden ${scrolled ? "max-h-0 opacity-0" : "max-h-35 py-2 opacity-100"}`}>
         <div className="max-w-[1600px] mx-auto px-12 flex justify-end gap-6 font-bold uppercase tracking-widest">
-          <button onClick={handleLoginClick} className="hover:text-blue-900 transition-colors cursor-pointer text-[12px]">LOGIN</button>
+          {!isLoggedIn ? (
+  <button 
+    onClick={handleLoginClick} 
+    className="hover:text-blue-900 transition-colors cursor-pointer text-[12px]"
+  >
+    LOGIN
+  </button>
+) : (
+  <button 
+    onClick={handleProfileClick}
+    className="hover:text-blue-900 transition-colors cursor-pointer"
+  >
+    <User size={18} />
+  </button>
+)}
           <button className="flex gap-1 items-center hover:text-blue-900 transition-colors text-[12px]">
             <Gift size={14} /> MAKE A GIFT
           </button>
@@ -190,4 +226,4 @@ export default function Header() {
       </nav>
     </header>
   )
-}
+} 

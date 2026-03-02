@@ -106,40 +106,60 @@ router.post('/resend-otp', [
   res.json({ message: 'Verification OTP resent successfully' });
 });
 
-// 4. LOGIN
+// 4. LOGIN (Email OR Phone)
 router.post('/login', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty()
+  body('identifier').notEmpty().withMessage('Email or phone is required'),
+  body('password').notEmpty().withMessage('Password is required')
 ], async (req, res) => {
+
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
-  const { email, password } = req.body;
-
-  const user = await User.findOne({ email }).select('+passwordHash +emailVerification +role');
-  if (!user) return res.status(401).json({ message: 'Invalid credentials' });
-
-  if (!user.isEmailVerified) {
-    return res.status(403).json({ message: 'Please verify your email first' });
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
 
-  const isMatch = await bcrypt.compare(password, user.passwordHash);
-  if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+  const { identifier, password } = req.body;
 
-  const token = jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
-    process.env.JWT_SECRET || 'your-super-secret-key-123',
-    { expiresIn: '7d' }
-  );
+  try {
+    // Find user by email OR phone
+    const user = await User.findOne({
+      $or: [
+        { email: identifier },
+        { phone: identifier }
+      ]
+    }).select('+passwordHash +emailVerification +role');
 
-  const { passwordHash, emailVerification, ...safeUser } = user.toObject();
-  res.json({
-    message: 'Login successful',
-    token,
-    user: { ...safeUser, role: user.role }
-  });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ message: 'Please verify your email first' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-super-secret-key-123',
+      { expiresIn: '7d' }
+    );
+
+    const { passwordHash, emailVerification, ...safeUser } = user.toObject();
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: { ...safeUser, role: user.role }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
-
 // Role middleware
 const requireRole = (roles) => (req, res, next) => {
   const userRole = req.user?.role;
