@@ -4,6 +4,7 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
+import profileRoutes from './routes/profile.js';
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use("/api/profile", profileRoutes);
 
 // Protected routes
 app.get('/api/protected/dashboard', authenticateToken, (req, res) => {
