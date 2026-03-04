@@ -1,179 +1,173 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 
 export default function AlumniDirectory() {
-  const router = useRouter();
   const [alumni, setAlumni] = useState([]);
+  const [myId, setMyId] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    passingYear: "",
+    search: "",
     bloodGroup: "",
-    hostel: "",
-    skills: "",
-    company: "",
-    location: "",
+    passingYear: "",
+    company: ""
   });
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchAlumni = async () => {
+  const fetchAlumni = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return router.push("/login");
+      setLoading(true);
+      const token = localStorage.getItem("token"); 
+      
+      const queryParams = new URLSearchParams();
+      if (filters.search) queryParams.append("search", filters.search);
+      if (filters.bloodGroup) queryParams.append("bloodGroup", filters.bloodGroup);
+      if (filters.passingYear) queryParams.append("passingYear", filters.passingYear);
+      if (filters.company) queryParams.append("company", filters.company);
 
-      const query = new URLSearchParams({ ...filters, page, limit: 20 }).toString();
-      const res = await fetch(`/api/alumni?${query}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/alumni/directory?${queryParams}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          alert("You are not authorized or verified!");
-          router.push("/login");
-        }
-        throw new Error("Failed to fetch alumni");
+      const result = await response.json();
+      if (response.ok) {
+        setAlumni(result.data);
+        setMyId(result.currentUserId);
       }
-
-      const data = await res.json();
-      setAlumni(data.alumni);
-      setTotalPages(Math.ceil(data.total / data.perPage));
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
-    fetchAlumni();
-  }, [filters, page]);
+    const timer = setTimeout(() => fetchAlumni(), 300);
+    return () => clearTimeout(timer);
+  }, [fetchAlumni]);
 
-  const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
-    setPage(1);
-  };
+  const getInitials = (name) => name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Alumni Directory</h1>
-
-      {/* ================= Filter Section ================= */}
-      <div className="flex flex-wrap gap-3 mb-6 items-center">
-        <input
-          type="number"
-          name="passingYear"
-          placeholder="Year"
-          value={filters.passingYear}
-          onChange={handleFilterChange}
-          className="border rounded px-3 py-1 text-sm w-24"
-        />
-        <input
-          type="text"
-          name="bloodGroup"
-          placeholder="Blood Group"
-          value={filters.bloodGroup}
-          onChange={handleFilterChange}
-          className="border rounded px-3 py-1 text-sm w-24"
-        />
-        <input
-          type="text"
-          name="hostel"
-          placeholder="Hostel"
-          value={filters.hostel}
-          onChange={handleFilterChange}
-          className="border rounded px-3 py-1 text-sm w-24"
-        />
-        <input
-          type="text"
-          name="skills"
-          placeholder="Skills"
-          value={filters.skills}
-          onChange={handleFilterChange}
-          className="border rounded px-3 py-1 text-sm w-36"
-        />
-        <input
-          type="text"
-          name="company"
-          placeholder="Company"
-          value={filters.company}
-          onChange={handleFilterChange}
-          className="border rounded px-3 py-1 text-sm w-36"
-        />
-        <input
-          type="text"
-          name="location"
-          placeholder="City"
-          value={filters.location}
-          onChange={handleFilterChange}
-          className="border rounded px-3 py-1 text-sm w-36"
-        />
-      </div>
-
-      {/* ================= Alumni List Section ================= */}
-      <div className="flex gap-6">
-        {/* Left Side: Alumni Cards */}
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {alumni.map((a) => (
-            <div
-              key={a._id}
-              className="bg-white rounded-lg shadow-md hover:shadow-xl transition p-4 flex flex-col items-center text-center"
+    <div className="max-w-6xl mx-auto px-6 py-12 min-h-screen bg-white">
+      {/* Search & Filter Section */}
+      <div className="mb-12 border-b border-slate-200 pb-10">
+        <h1 className="text-4xl font-extrabold text-slate-900 mb-2">Alumni Directory</h1>
+        <p className="text-slate-600 mb-8 text-lg">Browse and connect with verified members of our community.</p>
+        
+        <div className="flex flex-col md:flex-row gap-4 bg-slate-100 p-5 rounded-3xl items-center">
+          <div className="relative flex-1 w-full">
+            <span className="absolute left-4 top-3.5 text-slate-400">🔍</span>
+            <input
+              type="text"
+              placeholder="Search by name or skills..."
+              className="w-full pl-12 pr-4 py-3 rounded-2xl border-none ring-1 ring-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none text-slate-900 placeholder:text-slate-400"
+              onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
+            />
+          </div>
+          
+          <div className="flex gap-3 w-full md:w-auto">
+            <select
+              className="flex-1 md:w-44 p-3 rounded-2xl border-none ring-1 ring-slate-300 bg-white text-sm font-semibold text-slate-700"
+              onChange={(e) => setFilters(f => ({ ...f, bloodGroup: e.target.value }))}
             >
-              <img
-                src={a.profile.profilePicUrl || "/default-profile.png"}
-                alt={a.name}
-                className="w-24 h-24 rounded-full mb-3 object-cover"
-              />
-              <h2 className="font-semibold text-lg">{a.name}</h2>
-              <p className="text-sm text-gray-600 mb-2">
-                {a.profile.bio
-                  ? a.profile.bio.length > 120
-                    ? a.profile.bio.slice(0, 120) + "..."
-                    : a.profile.bio
-                  : "No bio available"}
-              </p>
-              <div className="text-left text-sm w-full space-y-1">
-                <p><span className="font-semibold">Year:</span> {a.academic.passingYear}</p>
-                <p><span className="font-semibold">Blood:</span> {a.profile.bloodGroup}</p>
-                <p><span className="font-semibold">Hostel:</span> {a.academic.hostel}</p>
-                <p><span className="font-semibold">Skills:</span> {a.professional.skills.join(", ") || "N/A"}</p>
-                <p><span className="font-semibold">Company:</span> {a.professional.experiences[0]?.company || "N/A"}</p>
-                <p><span className="font-semibold">Location:</span> {a.profile.location.city || "N/A"}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Right Side (optional: you could add a placeholder for map or details) */}
-        <div className="w-1/4 hidden lg:block">
-          <div className="sticky top-6 p-4 border rounded bg-gray-50 text-gray-700">
-            <h3 className="font-semibold mb-2">Filters Applied</h3>
-            {Object.entries(filters).map(([key, value]) => (
-              value && (
-                <p key={key} className="text-sm">
-                  <span className="font-semibold">{key}:</span> {value}
-                </p>
-              )
-            ))}
+              <option value="">Blood Group</option>
+              {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(bg => <option key={bg} value={bg}>{bg}</option>)}
+            </select>
+            
+            <input
+              type="number"
+              placeholder="Year"
+              className="w-28 p-3 rounded-2xl border-none ring-1 ring-slate-300 text-sm font-semibold text-slate-700"
+              onChange={(e) => setFilters(f => ({ ...f, passingYear: e.target.value }))}
+            />
           </div>
         </div>
       </div>
 
-      {/* ================= Pagination ================= */}
-      <div className="flex justify-center gap-3 mt-6">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage((p) => p - 1)}
-          className="px-4 py-2 border rounded bg-white hover:bg-gray-100 disabled:opacity-50"
-        >
-          Prev
-        </button>
-        <span className="px-4 py-2 text-sm">{page} / {totalPages}</span>
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          className="px-4 py-2 border rounded bg-white hover:bg-gray-100 disabled:opacity-50"
-        >
-          Next
-        </button>
+      {/* Directory List */}
+      <div className="space-y-6">
+        {loading ? (
+          <div className="flex flex-col items-center py-24 gap-4">
+            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-900 font-bold animate-pulse">Loading Alumni...</p>
+          </div>
+        ) : alumni.length > 0 ? (
+          alumni.map((person) => {
+            const isMe = person._id === myId;
+            const currentJob = person.professional?.experiences?.find(e => e.isCurrent) || person.professional?.experiences[0];
+
+            return (
+              <div key={person._id} className="flex flex-col sm:flex-row gap-8 p-8 rounded-[2.5rem] border border-slate-200 hover:border-indigo-300 hover:shadow-xl transition-all duration-300 items-center sm:items-start bg-white relative">
+                
+                {/* Image Section (LEFT) */}
+                <div className="relative flex-shrink-0">
+                  {person.profile?.profilePicUrl ? (
+                    <img 
+                      src={person.profile.profilePicUrl} 
+                      className="w-32 h-32 sm:w-40 sm:h-40 rounded-[2rem] object-cover ring-4 ring-slate-50 border border-slate-100" 
+                      alt={person.name} 
+                    />
+                  ) : (
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-[2rem] bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center text-white text-5xl font-black shadow-lg">
+                      {getInitials(person.name)}
+                    </div>
+                  )}
+                  {isMe && (
+                    <span className="absolute -top-3 -right-3 bg-green-600 text-white text-[12px] font-black px-4 py-1.5 rounded-2xl border-4 border-white shadow-md">
+                      YOU
+                    </span>
+                  )}
+                </div>
+
+                {/* Details Section (RIGHT) - High Contrast Colors */}
+                <div className="flex-1 text-center sm:text-left min-w-0">
+                  <div className="flex flex-col sm:flex-row justify-between items-center sm:items-start mb-4 gap-3">
+                    <div>
+                      <h2 className="text-3xl font-black text-slate-900 leading-none mb-2">{person.name}</h2>
+                      <p className="text-indigo-700 font-extrabold text-base">
+                        {currentJob?.designation || "Professional"} 
+                        <span className="text-slate-400 mx-2 font-normal">at</span> 
+                        {currentJob?.company || "Not listed"}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-center sm:items-end gap-2">
+                      <span className="bg-slate-900 text-white text-[11px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
+                        Batch {person.academic?.passingYear}
+                      </span>
+                      {person.profile?.bloodGroup && (
+                        <span className="text-red-600 font-black text-sm px-2">
+                          🩸 Group: {person.profile.bloodGroup}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bio - No longer faded */}
+                  <p className="text-slate-700 text-base font-medium italic mb-6 leading-relaxed line-clamp-2">
+                    "{person.profile?.bio || "Community member and alumni."}"
+                  </p>
+
+                  {/* Skills Section */}
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                    {person.professional?.skills?.map((skill, i) => (
+                      <span key={i} className="px-4 py-1.5 bg-indigo-50 text-indigo-800 text-[11px] font-black rounded-xl border border-indigo-100 uppercase tracking-tighter">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center py-32 bg-slate-50 rounded-[3rem] border-4 border-dashed border-slate-200">
+            <p className="text-slate-900 text-xl font-black">No batchmates found.</p>
+            <p className="text-slate-500 font-medium mt-2">Try adjusting your filters or search terms.</p>
+          </div>
+        )}
       </div>
     </div>
   );

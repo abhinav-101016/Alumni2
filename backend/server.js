@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profile.js';
-import alumniRoutes from "./routes/alumni.js";
+import alumniRoutes from "./routes/alumniRoutes.js";
 
 dotenv.config();
 
