@@ -37,6 +37,18 @@ router.put(
     body("experience.*.currentlyWorking")
       .isBoolean()
       .withMessage("currentlyWorking must be boolean"),
+
+    // ✅ CONDITIONAL END DATE VALIDATION
+    body("experience").custom((experiences) => {
+      for (const exp of experiences) {
+        if (!exp.currentlyWorking && !exp.endDate) {
+          throw new Error(
+            "End date is required if not currently working"
+          );
+        }
+      }
+      return true;
+    }),
   ],
 
   async (req, res) => {
@@ -86,7 +98,6 @@ router.put(
 
       user.profile.location = location || {};
 
-      /* ---------- SOCIAL LINKS ---------- */
       user.profile.socialLinks.linkedin = linkedin || "";
       user.profile.socialLinks.twitter = twitter || "";
       user.profile.socialLinks.github = github || "";
@@ -96,24 +107,36 @@ router.put(
          UPDATE PROFESSIONAL BLOCK
       ===================================================== */
 
-      user.professional.experiences = experience.map((exp) => ({
-        company: exp.companyName,
-        designation: exp.position,
-        startDate: new Date(exp.startDate),
-        endDate: exp.endDate ? new Date(exp.endDate) : null,
-        isCurrent: exp.currentlyWorking,
-        description: exp.description || "",
-      }));
+      user.professional.experiences = experience.map((exp) => {
+        const isCurrent = exp.currentlyWorking;
 
-      user.professional.skills = skills || [];
+        return {
+          company: exp.companyName,
+          designation: exp.position,
+          startDate: new Date(exp.startDate),
+
+          // ✅ SAFE END DATE HANDLING
+          endDate: isCurrent
+            ? null
+            : exp.endDate
+            ? new Date(exp.endDate)
+            : null,
+
+          isCurrent: isCurrent,
+          description: exp.description || "",
+        };
+      });
+
+      user.professional.skills = Array.isArray(skills)
+        ? skills
+        : [];
 
       /* =====================================================
          PROFILE COMPLETION FLAG
       ===================================================== */
 
       user.isProfileComplete =
-        user.profile.bio &&
-        user.professional.experiences &&
+        !!user.profile.bio &&
         user.professional.experiences.length > 0;
 
       /* ---------- SAVE ---------- */

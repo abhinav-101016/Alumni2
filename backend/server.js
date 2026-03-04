@@ -55,6 +55,7 @@ mongoose.connect(process.env.MONGODB_URI)
 // Routes
 app.use('/api/auth', authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/alumni", alumniRoutes);
 
 // Protected routes
 app.get('/api/protected/dashboard', authenticateToken, (req, res) => {
