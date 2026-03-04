@@ -41,27 +41,35 @@ router.post(
         password,
         dob,
         gender,
+        bloodGroup,
+        city,
+        country,
+        bio,
         course,
         branch,
         passingYear,
         hostel,
       } = req.body;
 
+      // Check if user exists
       const existingUser = await User.findOne({
         $or: [{ email }, { phone }],
       });
 
       if (existingUser)
-        return res
-          .status(409)
-          .json({ message: "Email or phone already exists" });
+        return res.status(409).json({ message: "Email or phone already exists" });
 
+      // Hash password
       const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+      // Determine role based on passing year
       const role = passingYear < CURRENT_YEAR ? "alumni" : "student";
 
+      // Generate OTP
       const otp = generateOTP();
       const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY);
 
+      // Create user with all optional fields included
       const user = new User({
         name,
         email,
@@ -87,19 +95,33 @@ router.post(
         profile: {
           dob: new Date(dob),
           gender,
+          bloodGroup: bloodGroup || "",
+          location: {
+            city: city || "",
+            country: country || "",
+          },
+          bio: bio || "",
         },
 
         academic: {
           course,
-          branch,
+          branch: branch || "",
           passingYear,
-          hostel,
+          hostel: hostel || "",
+        },
+
+        professional: {
+          experiences: [],
+          skills: [],
         },
       });
 
       await user.save();
+
+      // Send verification email
       await sendVerificationEmail(email, otp);
 
+      // Return safe user object
       const safeUser = user.toObject();
       delete safeUser.auth;
 
@@ -113,6 +135,7 @@ router.post(
     }
   }
 );
+
 
 /* =====================================================
    2. VERIFY EMAIL OTP
@@ -170,7 +193,7 @@ router.post(
       res.status(500).json({ message: "Server error" });
     }
   }
-);
+)
 
 /* =====================================================
    3. RESEND OTP
