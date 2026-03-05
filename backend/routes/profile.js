@@ -13,43 +13,47 @@ router.put(
   "/complete",
   authMiddleware,
 
-  [
-    body("bio")
-      .isLength({ min: 20 })
-      .withMessage("Bio must be at least 20 characters"),
+ [
+  body("bio")
+    .trim()
+    .isLength({ min: 20 })
+    .withMessage("Bio must be at least 20 characters"),
 
-    body("experience")
-      .isArray({ min: 1 })
-      .withMessage("At least one experience is required"),
+  body("experience")
+    .isArray({ min: 1 })
+    .withMessage("At least one experience is required"),
 
-    body("experience.*.companyName")
-      .notEmpty()
-      .withMessage("Company name is required"),
+  body("experience.*.companyName")
+    .trim()
+    .notEmpty()
+    .withMessage("Company name is required"),
 
-    body("experience.*.position")
-      .notEmpty()
-      .withMessage("Position is required"),
+  body("experience.*.position")
+    .trim()
+    .notEmpty()
+    .withMessage("Position is required"),
 
-    body("experience.*.startDate")
-      .isISO8601()
-      .withMessage("Start date must be valid date"),
+  body("experience.*.startDate")
+    .notEmpty()
+    .withMessage("Start date required")
+    .isISO8601()
+    .withMessage("Start date must be valid"),
 
-    body("experience.*.currentlyWorking")
-      .isBoolean()
-      .withMessage("currentlyWorking must be boolean"),
+  body("experience.*.currentlyWorking")
+    .isBoolean()
+    .withMessage("currentlyWorking must be boolean"),
 
-    // ✅ CONDITIONAL END DATE VALIDATION
-    body("experience").custom((experiences) => {
-      for (const exp of experiences) {
-        if (!exp.currentlyWorking && !exp.endDate) {
-          throw new Error(
-            "End date is required if not currently working"
-          );
-        }
+  body("experience").custom((experiences) => {
+    for (const exp of experiences) {
+      if (!exp.currentlyWorking && !exp.endDate) {
+        throw new Error(
+          "End date is required if not currently working"
+        );
       }
-      return true;
-    }),
-  ],
+    }
+    return true;
+  }),
+],
 
   async (req, res) => {
     try {
@@ -96,7 +100,7 @@ router.put(
 
       user.profile.bio = bio;
 
-      user.profile.location = location || {};
+      
 
       user.profile.socialLinks.linkedin = linkedin || "";
       user.profile.socialLinks.twitter = twitter || "";

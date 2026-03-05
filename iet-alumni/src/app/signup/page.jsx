@@ -79,33 +79,35 @@ export default function SignUp() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+  e.preventDefault();
+  setLoading(true);
+  setMessage("");
 
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, passingYear: Number(formData.passingYear) })
-      });
+  // Debug: Ensure city and country exist in formData
+  console.log("Submitting Form Data:", formData);
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Registration failed");
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        ...formData, 
+        passingYear: Number(formData.passingYear) // Ensure numeric type
+      })
+    });
 
-      // Save email for OTP page
-      sessionStorage.setItem("verifyEmail", formData.email);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Registration failed");
 
-      // Redirect to Verify Email page
-      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+    sessionStorage.setItem("verifyEmail", formData.email);
+    router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
 
-    } catch (err) {
-      setMessage("❌ " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  } catch (err) {
+    setMessage("❌ " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
       <div className="w-full lg:w-1/2 bg-white border border-slate-200 shadow-sm overflow-hidden rounded-sm">

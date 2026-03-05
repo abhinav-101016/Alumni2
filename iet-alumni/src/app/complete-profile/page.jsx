@@ -115,12 +115,19 @@ export default function CompleteProfile() {
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Update failed");
+     if (!res.ok) {
+  const msg =
+    data?.errors?.map((e) => e.msg).join(", ") ||
+    data.message ||
+    "Update failed";
+
+  throw new Error(msg);
+}
 
       setMessage("✅ Profile completed successfully");
 
       setTimeout(() => {
-        router.push("/alumni-directory");
+        router.push("/alumni");
       }, 1200);
     } catch (err) {
       setMessage("❌ " + err.message);

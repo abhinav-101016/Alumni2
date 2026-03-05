@@ -89,8 +89,8 @@ const userSchema = new mongoose.Schema(
       },
 
       location: {
-        city: String,
-        country: String,
+        city:{type:String},
+        country:{type:String},
       },
 
       privacy: {

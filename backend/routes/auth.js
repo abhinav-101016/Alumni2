@@ -6,6 +6,7 @@ import User from "../models/User.js";
 import { sendVerificationEmail } from "../utils/email.js";
 
 const router = express.Router();
+
 const SALT_ROUNDS = 12;
 const CURRENT_YEAR = 2026;
 const OTP_EXPIRY = 10 * 60 * 1000; // 10 minutes
@@ -14,7 +15,9 @@ const generateOTP = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
 /* =====================================================
-   1. REGISTER
+   1️⃣ REGISTER
+/* =====================================================
+   1️⃣ REGISTER (CORRECTED)
 ===================================================== */
 router.post(
   "/register",
@@ -30,115 +33,74 @@ router.post(
   ],
   async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty())
-      return res.status(400).json({ errors: errors.array() });
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
     try {
+      // 1. Destructure all fields from the flat req.body sent by the frontend
       const {
-        name,
-        email,
-        phone,
-        password,
-        dob,
-        gender,
-        bloodGroup,
-        city,
-        country,
-        bio,
-        course,
-        branch,
-        passingYear,
-        hostel,
+        name, email, phone, password, dob, gender,
+        bloodGroup, city, country, bio, course, 
+        branch, passingYear, hostel
       } = req.body;
 
-      // Check if user exists
-      const existingUser = await User.findOne({
-        $or: [{ email }, { phone }],
-      });
+      const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+      if (existingUser) return res.status(409).json({ message: "Email or phone already exists" });
 
-      if (existingUser)
-        return res.status(409).json({ message: "Email or phone already exists" });
-
-      // Hash password
       const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-      // Determine role based on passing year
-      const role = passingYear < CURRENT_YEAR ? "alumni" : "student";
-
-      // Generate OTP
+      const role = Number(passingYear) < CURRENT_YEAR ? "alumni" : "student";
       const otp = generateOTP();
       const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY);
 
-      // Create user with all optional fields included
+      /* ---------- CREATE USER WITH NESTED MAPPING ---------- */
       const user = new User({
-        name,
+        name: name.trim(),
         email,
         phone,
         role,
-
         auth: {
           passwordHash,
-          emailVerification: {
-            otp,
-            otpExpiresAt,
-          },
+          emailVerification: { otp, otpExpiresAt },
         },
-
         verification: {
           isEmailVerified: false,
           isPhoneVerified: false,
           isVerifiedByAdmin: false,
         },
-
         accountStatus: "pending",
-
         profile: {
           dob: new Date(dob),
           gender,
-          bloodGroup: bloodGroup || "",
+          bloodGroup: bloodGroup?.trim() || "",
+          bio: bio?.trim() || "",
+          // MAPPING HAPPENS HERE:
           location: {
-            city: city || "",
-            country: country || "",
+            city: city?.trim() || "",
+            country: country?.trim() || "",
           },
-          bio: bio || "",
         },
-
         academic: {
           course,
           branch: branch || "",
-          passingYear,
+          passingYear: Number(passingYear),
           hostel: hostel || "",
-        },
-
-        professional: {
-          experiences: [],
-          skills: [],
         },
       });
 
       await user.save();
-
-      // Send verification email
       await sendVerificationEmail(email, otp);
 
-      // Return safe user object
       const safeUser = user.toObject();
       delete safeUser.auth;
 
-      res.status(201).json({
-        message: "User registered. Please verify your email.",
-        user: safeUser,
-      });
+      res.status(201).json({ message: "User registered. Please verify your email.", user: safeUser });
     } catch (error) {
       console.error("Register error:", error);
       res.status(500).json({ message: "Server error" });
     }
   }
 );
-
-
 /* =====================================================
-   2. VERIFY EMAIL OTP
+   2️⃣ VERIFY EMAIL OTP
 ===================================================== */
 router.post(
   "/verify-email",
@@ -148,6 +110,7 @@ router.post(
   ],
   async (req, res) => {
     const errors = validationResult(req);
+
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
@@ -155,6 +118,7 @@ router.post(
       const { email, otp } = req.body;
 
       const user = await User.findOne({ email });
+
       if (!user)
         return res.status(404).json({ message: "User not found" });
 
@@ -189,14 +153,14 @@ router.post(
         user: safeUser,
       });
     } catch (error) {
-      console.error("Verify error:", error);
+      console.error("Verify email error:", error);
       res.status(500).json({ message: "Server error" });
     }
   }
-)
+);
 
 /* =====================================================
-   3. RESEND OTP
+   3️⃣ RESEND OTP
 ===================================================== */
 router.post(
   "/resend-otp",
@@ -206,6 +170,7 @@ router.post(
       const { email } = req.body;
 
       const user = await User.findOne({ email });
+
       if (!user)
         return res.status(404).json({ message: "User not found" });
 
@@ -218,11 +183,14 @@ router.post(
       const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY);
 
       user.auth.emailVerification = { otp, otpExpiresAt };
+
       await user.save();
 
       await sendVerificationEmail(email, otp);
 
-      res.json({ message: "Verification OTP resent successfully" });
+      res.json({
+        message: "Verification OTP resent successfully",
+      });
     } catch (error) {
       console.error("Resend OTP error:", error);
       res.status(500).json({ message: "Server error" });
@@ -231,13 +199,14 @@ router.post(
 );
 
 /* =====================================================
-   4. LOGIN (UPDATED)
+   4️⃣ LOGIN
 ===================================================== */
 router.post(
   "/login",
   [body("identifier").notEmpty(), body("password").notEmpty()],
   async (req, res) => {
     const errors = validationResult(req);
+
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
@@ -267,17 +236,6 @@ router.post(
       if (!isMatch)
         return res.status(401).json({ message: "Invalid credentials" });
 
-      /* ---------- PROFILE COMPLETION CHECK ---------- */
-      let profileComplete = true;
-
-      if (user.role === "alumni") {
-        profileComplete = Boolean(
-          user.profile?.bio &&
-          user.profile?.experience &&
-          user.profile.experience.length > 0
-        );
-      }
-
       /* ---------- TOKEN ---------- */
       const token = jwt.sign(
         { id: user._id, role: user.role },
@@ -292,7 +250,6 @@ router.post(
         message: "Login successful",
         token,
         role: user.role,
-        profileComplete: user.isProfileComplete,
         user: safeUser,
       });
     } catch (error) {
@@ -307,11 +264,13 @@ router.post(
 ===================================================== */
 export const requireRole = (roles) => (req, res, next) => {
   const userRole = req.user?.role;
+
   if (!roles.includes(userRole)) {
     return res
       .status(403)
       .json({ message: `Role ${userRole} not authorized` });
   }
+
   next();
 };
 

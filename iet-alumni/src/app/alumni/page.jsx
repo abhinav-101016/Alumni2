@@ -31,7 +31,7 @@ export default function AlumniDirectory() {
       );
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/alumni/directory?${queryParams}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/alumni/directory?${queryParams}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
