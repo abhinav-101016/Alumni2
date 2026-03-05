@@ -71,87 +71,81 @@ export default function AlumniDirectory() {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* FILTER BAR */}
-        <div className="flex flex-col md:flex-row flex-wrap gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-200 mb-12 shadow-sm">
-          <input
-            type="text"
-            placeholder="Search by name, skills, company, position..."
-            className="flex-1 px-4 py-3 rounded-2xl border border-slate-300 focus:ring-2 focus:ring-[#800000] outline-none text-slate-900 font-medium"
-            value={filters.search}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, search: e.target.value }))
-            }
-          />
-          <select
-            className="w-36 p-3 rounded-2xl border border-slate-300 bg-white text-sm font-bold text-slate-700"
-            value={filters.bloodGroup}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, bloodGroup: e.target.value }))
-            }
-          >
-            <option value="">Blood Group</option>
-            {BLOOD_GROUPS.map((bg) => (
-              <option key={bg} value={bg}>{bg}</option>
-            ))}
-          </select>
-          <input
-            type="number"
-            placeholder="Year"
-            className="w-28 p-3 rounded-2xl border border-slate-300 text-sm font-bold text-slate-700"
-            value={filters.passingYear}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, passingYear: e.target.value }))
-            }
-          />
-          <input
-            type="text"
-            placeholder="Company"
-            className="w-36 p-3 rounded-2xl border border-slate-300 text-sm font-bold text-slate-700"
-            value={filters.company}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, company: e.target.value }))
-            }
-          />
-          <input
-            type="text"
-            placeholder="Position"
-            className="w-36 p-3 rounded-2xl border border-slate-300 text-sm font-bold text-slate-700"
-            value={filters.position}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, position: e.target.value }))
-            }
-          />
-          <input
-            type="text"
-            placeholder="City"
-            className="w-36 p-3 rounded-2xl border border-slate-300 text-sm font-bold text-slate-700"
-            value={filters.city}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, city: e.target.value }))
-            }
-          />
-          <input
-            type="text"
-            placeholder="Country"
-            className="w-36 p-3 rounded-2xl border border-slate-300 text-sm font-bold text-slate-700"
-            value={filters.country}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, country: e.target.value }))
-            }
-          />
-          <select
-            className="w-36 p-3 rounded-2xl border border-slate-300 bg-white text-sm font-bold text-slate-700"
-            value={filters.branch}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, branch: e.target.value }))
-            }
-          >
-            <option value="">Branch</option>
-            {BRANCHES.map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
-        </div>
+      {/* FILTER BAR - COMPACT GRID FOR MOBILE, FLEX FOR DESKTOP */}
+<div className="grid grid-cols-2 md:flex md:flex-row md:flex-wrap gap-3 bg-slate-50 p-4 md:p-6 rounded-[2rem] border border-slate-200 mb-12 shadow-sm">
+  
+  {/* Search Bar - Spans full width on mobile (2 columns) */}
+  <div className="col-span-2 md:flex-1">
+    <input
+      type="text"
+      placeholder="Search by name, skills, company..."
+      className="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:ring-2 focus:ring-[#800000] outline-none text-slate-900 font-medium placeholder:text-slate-400"
+      value={filters.search}
+      onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+    />
+  </div>
 
+  {/* Blood Group Dropdown */}
+  <select
+    className="w-full md:w-36 p-3 rounded-2xl border border-slate-300 bg-white text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#800000]"
+    value={filters.bloodGroup}
+    onChange={(e) => setFilters((f) => ({ ...f, bloodGroup: e.target.value }))}
+  >
+    <option value="">Blood Group</option>
+    {BLOOD_GROUPS.map((bg) => (
+      <option key={bg} value={bg}>{bg}</option>
+    ))}
+  </select>
+
+  {/* Passing Year */}
+  <input
+    type="number"
+    placeholder="Year"
+    className="w-full md:w-28 p-3 rounded-2xl border border-slate-300 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#800000]"
+    value={filters.passingYear}
+    onChange={(e) => setFilters((f) => ({ ...f, passingYear: e.target.value }))}
+  />
+
+  {/* Branch Dropdown */}
+  <select
+    className="w-full md:w-44 p-3 rounded-2xl border border-slate-300 bg-white text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#800000]"
+    value={filters.branch}
+    onChange={(e) => setFilters((f) => ({ ...f, branch: e.target.value }))}
+  >
+    <option value="">Branch</option>
+    {BRANCHES.map((b) => (
+      <option key={b} value={b}>{b}</option>
+    ))}
+  </select>
+
+  {/* Professional & Location Fields (Side-by-side on mobile) */}
+  {[
+    { id: "company", placeholder: "Company" },
+    { id: "position", placeholder: "Position" },
+    { id: "city", placeholder: "City" },
+    { id: "country", placeholder: "Country" },
+  ].map((field) => (
+    <input
+      key={field.id}
+      type="text"
+      placeholder={field.placeholder}
+      className="w-full md:w-36 p-3 rounded-2xl border border-slate-300 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#800000]"
+      value={filters[field.id]}
+      onChange={(e) => setFilters((f) => ({ ...f, [field.id]: e.target.value }))}
+    />
+  ))}
+  
+  {/* Clear Filters Button (Optional but helpful for mobile) */}
+  <button 
+    onClick={() => setFilters({
+        search: "", bloodGroup: "", passingYear: "", company: "", 
+        position: "", city: "", country: "", branch: "" 
+    })}
+    className="col-span-2 md:w-auto px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-[#800000] transition-colors"
+  >
+    Reset All
+  </button>
+</div>
         {/* ALUMNI LIST */}
         <div className="grid grid-cols-1 gap-8">
           {loading ? (
