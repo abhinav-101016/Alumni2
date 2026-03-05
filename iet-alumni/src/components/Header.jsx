@@ -77,6 +77,13 @@ export default function Header() {
     setOpen(false)
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    window.dispatchEvent(new Event("authChange"))
+    router.push("/login")
+    setOpen(false)
+  }
+
   const getRoute = (link) => {
     if (link === "Alumni Directory") return "/alumni"
     const slug = link.toLowerCase().replace(/\s+/g, "-")
@@ -89,6 +96,9 @@ export default function Header() {
 
   const isLightMode = open || (hoverNav && active !== null)
 
+  // Desktop nav: replace News with Logout
+  const desktopNavItems = [...navItems.slice(0, -1), "Logout"]
+
   return (
     <header className="sticky top-0 z-50 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]">
       {/* TOP UTILITY BAR (Desktop Only) */}
@@ -99,11 +109,17 @@ export default function Header() {
       >
         <div className="max-w-[1600px] mx-auto px-12 flex justify-end gap-6 font-bold uppercase tracking-widest">
           {!isLoggedIn ? (
-            <button onClick={handleLoginClick} className="hover:text-blue-900 transition-colors cursor-pointer text-[12px]">
+            <button
+              onClick={handleLoginClick}
+              className="hover:text-blue-900 transition-colors cursor-pointer text-[12px]"
+            >
               LOGIN
             </button>
           ) : (
-            <button onClick={handleProfileClick} className="hover:text-blue-900 transition-colors cursor-pointer">
+            <button
+              onClick={handleProfileClick}
+              className="hover:text-blue-900 transition-colors cursor-pointer"
+            >
               <User size={18} />
             </button>
           )}
@@ -116,8 +132,13 @@ export default function Header() {
       </div>
 
       <nav
-        onMouseEnter={() => { if (typeof window !== "undefined" && window.innerWidth >= 1024) setHoverNav(true) }}
-        onMouseLeave={() => { setHoverNav(false); setActive(null) }}
+        onMouseEnter={() => {
+          if (typeof window !== "undefined" && window.innerWidth >= 1024) setHoverNav(true)
+        }}
+        onMouseLeave={() => {
+          setHoverNav(false)
+          setActive(null)
+        }}
         className={`transition-all duration-500 shadow-xl ${
           isLightMode ? "bg-white text-black" : "bg-[#951114] text-white"
         } ${scrolled ? "py-1" : "py-2"}`}
@@ -167,21 +188,39 @@ export default function Header() {
           {/* DESKTOP NAV */}
           <div className="flex items-center gap-4">
             <ul className="hidden lg:flex gap-8 transition-all duration-500">
-              {navItems.map((item, i) => (
-                <li
-                  key={i}
-                  onMouseEnter={() => setActive(i)}
-                  className={`cursor-pointer flex items-center gap-1 transition-all duration-300 font-bold uppercase tracking-wide
-                  ${scrolled ? "text-sm" : "text-base"}
-                  ${active === i ? "text-blue-700" : isLightMode ? "hover:text-blue-700" : "hover:text-gray-300"}`}
-                >
-                  {item}
-                  <ChevronDown
-                    size={scrolled ? 14 : 18}
-                    className={`transition-transform duration-300 ${active === i ? "rotate-180" : ""}`}
-                  />
-                </li>
-              ))}
+              {desktopNavItems.map((item, i) => {
+                // Only show Logout if logged in
+                if (item === "Logout" && !isLoggedIn) return null
+
+                if (item === "Logout") {
+                  return (
+                    <li key={i}>
+                      <button
+                        onClick={handleLogout}
+                        className="px-4 py-2 text-gray-200 hover:text-white font-semibold uppercase tracking-wide border border-gray-300 rounded transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </li>
+                  )
+                }
+
+                return (
+                  <li
+                    key={i}
+                    onMouseEnter={() => setActive(i)}
+                    className={`cursor-pointer flex items-center gap-1 transition-all duration-300 font-bold uppercase tracking-wide
+                    ${scrolled ? "text-sm" : "text-base"}
+                    ${active === i ? "text-blue-700" : isLightMode ? "hover:text-blue-700" : "hover:text-gray-300"}`}
+                  >
+                    {item}
+                    <ChevronDown
+                      size={scrolled ? 14 : 18}
+                      className={`transition-transform duration-300 ${active === i ? "rotate-180" : ""}`}
+                    />
+                  </li>
+                )
+              })}
             </ul>
 
             <button
@@ -208,7 +247,7 @@ export default function Header() {
           }}
         >
           <div className="px-6 py-6 space-y-1 pb-24">
-            {/* MOBILE LOGIN/PROFILE BUTTON */}
+            {/* MOBILE LOGIN/PROFILE & LOGOUT BUTTONS */}
             <div className={`mb-6 pb-6 border-b ${isLightMode ? "border-gray-200" : "border-white/20"}`}>
               {!isLoggedIn ? (
                 <button
@@ -220,14 +259,24 @@ export default function Header() {
                   <User size={20} /> Login
                 </button>
               ) : (
-                <button
-                  onClick={handleProfileClick}
-                  className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold uppercase tracking-widest transition-all ${
-                    isLightMode ? "bg-gray-100 text-black" : "bg-white/10 text-white"
-                  }`}
-                >
-                  <User size={20} /> My Dashboard
-                </button>
+                <>
+                  <button
+                    onClick={handleProfileClick}
+                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold uppercase tracking-widest transition-all ${
+                      isLightMode ? "bg-gray-100 text-black" : "bg-white/10 text-white"
+                    }`}
+                  >
+                    <User size={20} /> My Dashboard
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold uppercase tracking-widest transition-all ${
+                      isLightMode ? "bg-gray-100 text-black" : "bg-white/10 text-white"
+                    }`}
+                  >
+                    Logout
+                  </button>
+                </>
               )}
             </div>
 
@@ -282,9 +331,7 @@ export default function Header() {
           <div className="absolute left-0 w-full bg-white text-black shadow-2xl border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="max-w-[1600px] mx-auto px-12 py-8">
               <div className="mb-4 flex items-center gap-3 group w-fit">
-                <div className="text-xl font-bold text-[#951114] uppercase tracking-tight">
-                  {navItems[active]}
-                </div>
+                <div className="text-xl font-bold text-[#951114] uppercase tracking-tight">{navItems[active]}</div>
                 <ArrowRight size={20} className="text-[#951114]" />
               </div>
               <div className="grid grid-cols-2 gap-x-12 gap-y-3">
