@@ -170,8 +170,17 @@ const userSchema = new mongoose.Schema(
 
     skills: [String],
   },
+  sessions: [
+{
+  refreshToken: String,
+  userAgent: String,
+  ip: String,
+  expiresAt: Date
+}
+]
 
 },
+
 {
   timestamps: true,
 }

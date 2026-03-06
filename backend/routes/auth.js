@@ -2,10 +2,11 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { body, validationResult } from "express-validator";
+import rateLimit from "express-rate-limit";
+
 import User from "../models/User.js";
 import { sendVerificationEmail } from "../utils/email.js";
 import { updateRoleIfGraduated } from "../middleware/updateRoleIfGraduated.js";
-
 
 const router = express.Router();
 
@@ -14,6 +15,23 @@ const OTP_EXPIRY = 10 * 60 * 1000;
 
 const generateOTP = () =>
 Math.floor(100000 + Math.random() * 900000).toString();
+
+
+
+/* =====================================================
+LOGIN RATE LIMITER
+===================================================== */
+
+const loginLimiter = rateLimit({
+windowMs: 15 * 60 * 1000,
+max: 5,
+message: {
+message: "Too many login attempts. Try again later."
+},
+standardHeaders: true,
+legacyHeaders: false,
+});
+
 
 
 /* =====================================================
@@ -150,6 +168,7 @@ res.status(500).json({message:"Server error"});
 );
 
 
+
 /* =====================================================
 VERIFY EMAIL
 ===================================================== */
@@ -196,6 +215,7 @@ res.status(500).json({message:"Server error"});
 });
 
 
+
 /* =====================================================
 RESEND OTP
 ===================================================== */
@@ -233,11 +253,12 @@ res.status(500).json({message:"Server error"});
 });
 
 
+
 /* =====================================================
-LOGIN
+LOGIN (SECURE VERSION)
 ===================================================== */
 
-router.post("/login", async(req,res)=>{
+router.post("/login", loginLimiter, async(req,res)=>{
 
 try{
 
@@ -254,9 +275,19 @@ if(!user){
 return res.status(401).json({message:"Invalid credentials"});
 }
 
+/* EMAIL VERIFICATION CHECK */
+
 if(!user.verification.isEmailVerified){
 return res.status(403).json({message:"Verify email first"});
 }
+
+/* ACCOUNT STATUS CHECK */
+
+if(user.accountStatus === "suspended" || user.accountStatus === "rejected"){
+return res.status(403).json({message:"Account access denied"});
+}
+
+/* PASSWORD CHECK */
 
 const isMatch = await bcrypt.compare(
 password,
@@ -271,6 +302,8 @@ return res.status(401).json({message:"Invalid credentials"});
 
 await updateRoleIfGraduated(user);
 
+/* TOKEN CREATION */
+
 const token = jwt.sign(
 {
 id:user._id,
@@ -279,6 +312,15 @@ role:user.role
 process.env.JWT_SECRET,
 {expiresIn:"1h"}
 );
+
+/* SECURE COOKIE */
+
+res.cookie("token", token, {
+httpOnly: true,
+secure: process.env.NODE_ENV === "production",
+sameSite: "strict",
+maxAge: 60 * 60 * 1000
+});
 
 const safeUser = user.toObject();
 delete safeUser.auth;
@@ -294,7 +336,6 @@ redirect="/complete-profile";
 
 res.json({
 message:"Login successful",
-token,
 role:user.role,
 redirect,
 user:safeUser
@@ -307,6 +348,38 @@ res.status(500).json({message:"Server error"});
 
 }
 
+});
+
+/* =====================================================
+LOGOUT
+===================================================== */
+
+router.post("/logout", (req, res) => {
+  try {
+    // Clear the cookie by setting its expiration to the past
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/", // Ensure the path matches where the cookie was set
+    });
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Logout failed" });
+  }
+});
+
+router.get("/status", (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ isLoggedIn: false });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({ isLoggedIn: true, user: decoded });
+  } catch (err) {
+    res.status(401).json({ isLoggedIn: false });
+  }
 });
 
 

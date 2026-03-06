@@ -16,17 +16,25 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(null)
 
-  useEffect(() => {
-    const checkLogin = () => {
-      const token = localStorage.getItem("token")
-      setIsLoggedIn(!!token)
+  // Function to check login status via Backend (since Cookies are HTTP-only)
+  const checkLogin = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/status`, {
+        credentials: "include", // Crucial: sends the cookie to the server
+      });
+      setIsLoggedIn(res.ok);
+    } catch (error) {
+      setIsLoggedIn(false);
     }
-    checkLogin()
-    window.addEventListener("storage", checkLogin)
-    window.addEventListener("authChange", checkLogin)
+  };
+
+  useEffect(() => {
+    checkLogin();
+    
+    // Listen for custom login/logout events from other components
+    window.addEventListener("authChange", checkLogin);
     return () => {
-      window.removeEventListener("storage", checkLogin)
-      window.removeEventListener("authChange", checkLogin)
+      window.removeEventListener("authChange", checkLogin);
     }
   }, [])
 
@@ -77,12 +85,25 @@ export default function Header() {
     setOpen(false)
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("token")
-    window.dispatchEvent(new Event("authChange"))
-    router.push("/login")
-    setOpen(false)
+ const handleLogout = async () => {
+  try {
+    // 1. Update UI immediately for a snappy feel
+    setIsLoggedIn(false); 
+    
+    // 2. Tell the backend to clear the cookie
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include"
+    });
+  } catch (err) {
+    console.error("Logout error", err);
+  } finally {
+    // 3. Force a state refresh and event dispatch
+    window.dispatchEvent(new Event("authChange"));
+    setOpen(false);
+    router.push("/login");
   }
+}
 
   const getRoute = (link) => {
     if (link === "Alumni Directory") return "/alumni"
@@ -95,8 +116,6 @@ export default function Header() {
   }
 
   const isLightMode = open || (hoverNav && active !== null)
-
-  // Desktop nav: replace News with Logout
   const desktopNavItems = [...navItems.slice(0, -1), "Logout"]
 
   return (
@@ -189,7 +208,6 @@ export default function Header() {
           <div className="flex items-center gap-4">
             <ul className="hidden lg:flex gap-8 transition-all duration-500">
               {desktopNavItems.map((item, i) => {
-                // Only show Logout if logged in
                 if (item === "Logout" && !isLoggedIn) return null
 
                 if (item === "Logout") {
@@ -247,7 +265,6 @@ export default function Header() {
           }}
         >
           <div className="px-6 py-6 space-y-1 pb-24">
-            {/* MOBILE LOGIN/PROFILE & LOGOUT BUTTONS */}
             <div className={`mb-6 pb-6 border-b ${isLightMode ? "border-gray-200" : "border-white/20"}`}>
               {!isLoggedIn ? (
                 <button
@@ -262,7 +279,7 @@ export default function Header() {
                 <>
                   <button
                     onClick={handleProfileClick}
-                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold uppercase tracking-widest transition-all ${
+                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold uppercase tracking-widest transition-all mb-3 ${
                       isLightMode ? "bg-gray-100 text-black" : "bg-white/10 text-white"
                     }`}
                   >

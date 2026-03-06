@@ -29,6 +29,7 @@ export default function Login() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`,
         {
           method: "POST",
+          credentials:"include",
           headers: {
             "Content-Type": "application/json",
           },
@@ -38,16 +39,16 @@ export default function Login() {
 
       const data = await res.json();
 
-     if (res.ok) {
-  localStorage.setItem("token", data.token)
+   if (res.ok) {
 
-  // 🔥 Notify header immediately
-  setMessage("You are Logged in")
   window.dispatchEvent(new Event("authChange"))
-   setTimeout(() => {
-          router.push("/");
-        }, 1500);
-  
+
+  setMessage("You are Logged in")
+
+  setTimeout(()=>{
+    router.push("/")
+  },1500)
+
 } else {
         setMessage(data.message || "Invalid credentials");
       }

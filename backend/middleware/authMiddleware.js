@@ -1,35 +1,35 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js"; // adjust path
+import User from "../models/User.js";
 
 export default async function authMiddleware(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
+    // token now comes from cookie
+    const token = req.cookies.token;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "No token provided" });
+    if (!token) {
+      return res.status(401).json({ message: "Authentication required" });
     }
 
-    const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Fetch user from DB
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id)
+      .select("-auth.passwordHash")
+      .lean();
+
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    // Check if verified by admin
-    if (!user.verification.isVerifiedByAdmin) {
+    if (!user.verification?.isVerifiedByAdmin) {
       return res.status(403).json({ message: "User not verified by admin" });
     }
 
-    // Attach user info to request
     req.user = {
       id: user._id,
       role: user.role,
       name: user.name,
       email: user.email,
-      isVerifiedByAdmin: user.verification.isVerifiedByAdmin,
+      isVerifiedByAdmin: user.verification?.isVerifiedByAdmin,
     };
 
     next();

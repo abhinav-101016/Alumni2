@@ -10,6 +10,7 @@ export const getAlumniDirectory = async (req, res) => {
       role: "alumni",
       "verification.isVerifiedByAdmin": true,
       accountStatus: "active",
+      isProfileComplete: true
     };
 
     // ---------------------------

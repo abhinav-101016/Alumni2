@@ -32,7 +32,8 @@ export default function AlumniDirectory() {
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/alumni/directory?${queryParams}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { credentials: "include"
+          ,headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (!response.ok) throw new Error("Failed to fetch alumni");
