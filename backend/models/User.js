@@ -75,6 +75,7 @@ const userSchema = new mongoose.Schema(
 
   isProfileComplete: {
     type: Boolean,
+    default:false
     
   },
 
@@ -197,10 +198,8 @@ userSchema.pre("save", function (next) {
     this.isProfileComplete = true;
   }
 
-  // If role is alumni → profile incomplete
-  if (this.role === "alumni") {
-    this.isProfileComplete = false;
-  }
+ 
+  
 
   next();
 });

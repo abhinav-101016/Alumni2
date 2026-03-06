@@ -19,6 +19,7 @@ const InputField = ({ label, name, value, onChange, type = "text" }) => (
 
 export default function CompleteProfile() {
   const router = useRouter();
+  const [authLoading, setAuthLoading] = useState(true); // Loading state for session check
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -40,12 +41,32 @@ export default function CompleteProfile() {
   });
 
   /* =========================
-     PROTECT ROUTE
+      PROTECT ROUTE (HTTP-ONLY)
   ========================== */
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) router.push("/login");
-  }, []);
+    const verifyUser = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/status`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          router.replace("/login");
+        } else {
+          const data = await res.json();
+          // If profile is already complete, don't let them stay here
+          if (data.user?.isProfileComplete) {
+            router.replace("/dashboard");
+          } else {
+            setAuthLoading(false);
+          }
+        }
+      } catch (err) {
+        router.replace("/login");
+      }
+    };
+    verifyUser();
+  }, [router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,15 +75,9 @@ export default function CompleteProfile() {
 
   const handleExperienceChange = (index, e) => {
     const { name, value, type, checked } = e.target;
-
     const updated = [...formData.experience];
-    updated[index][name] =
-      type === "checkbox" ? checked : value;
-
-    setFormData((prev) => ({
-      ...prev,
-      experience: updated,
-    }));
+    updated[index][name] = type === "checkbox" ? checked : value;
+    setFormData((prev) => ({ ...prev, experience: updated }));
   };
 
   const addExperience = () => {
@@ -70,13 +85,7 @@ export default function CompleteProfile() {
       ...prev,
       experience: [
         ...prev.experience,
-        {
-          companyName: "",
-          position: "",
-          startDate: "",
-          endDate: "",
-          currentlyWorking: false,
-        },
+        { companyName: "", position: "", startDate: "", endDate: "", currentlyWorking: false },
       ],
     }));
   };
@@ -87,7 +96,7 @@ export default function CompleteProfile() {
   };
 
   /* =========================
-     SUBMIT
+      SUBMIT (HTTP-ONLY)
   ========================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,40 +104,35 @@ export default function CompleteProfile() {
     setMessage("");
 
     try {
-      const token = localStorage.getItem("token");
-
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/profile/complete`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
+          credentials: "include", // CRUCIAL: Sends the HTTP-only cookie
           body: JSON.stringify({
             ...formData,
-            skills: formData.skills
-              .split(",")
-              .map((s) => s.trim()),
+            skills: formData.skills ? formData.skills.split(",").map((s) => s.trim()) : [],
           }),
         }
       );
 
       const data = await res.json();
-     if (!res.ok) {
-  const msg =
-    data?.errors?.map((e) => e.msg).join(", ") ||
-    data.message ||
-    "Update failed";
 
-  throw new Error(msg);
-}
+      if (!res.ok) {
+        throw new Error(data.message || "Update failed");
+      }
 
       setMessage("✅ Profile completed successfully");
 
+      // Dispatch event so Header refreshes status immediately
+      window.dispatchEvent(new Event("authChange"));
+
       setTimeout(() => {
-        router.push("/alumni");
-      }, 1200);
+        router.push("/dashboard");
+      }, 1500);
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -136,11 +140,17 @@ export default function CompleteProfile() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-[#951114]"></div>
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
       <div className="w-full lg:w-1/2 bg-white border border-slate-200 shadow-sm overflow-hidden rounded-sm">
-        
-        {/* Header */}
         <div className="pt-10 pb-6 text-center border-b border-slate-100">
           <div className="w-10 h-1 bg-[#951114] mx-auto mb-4" />
           <h2 className="text-3xl font-black text-black uppercase tracking-tighter">
@@ -152,101 +162,53 @@ export default function CompleteProfile() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10">
-
-          {/* Bio Section */}
+          {/* Section 01: Bio */}
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 01. Professional Summary
             </p>
-
             <div className="px-2">
               <textarea
                 name="bio"
                 value={formData.bio}
                 onChange={handleChange}
                 rows="4"
-                className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#951114] outline-none text-xs"
+                className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#951114] outline-none text-xs text-black font-medium"
                 placeholder="Write about your professional journey..."
               />
             </div>
           </section>
 
-          {/* Experience */}
+          {/* Section 02: Experience */}
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 02. Work Experience
             </p>
-
             {formData.experience.map((exp, index) => (
-              <div key={index} className="border border-slate-200 p-4 mb-6 space-y-4">
+              <div key={index} className="border border-slate-200 p-4 mb-6 space-y-4 bg-slate-50/30">
                 <div className="grid md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Company Name"
-                    name="companyName"
-                    value={exp.companyName}
-                    onChange={(e) => handleExperienceChange(index, e)}
-                  />
-                  <InputField
-                    label="Position"
-                    name="position"
-                    value={exp.position}
-                    onChange={(e) => handleExperienceChange(index, e)}
-                  />
-                  <InputField
-                    label="Start Date"
-                    name="startDate"
-                    type="date"
-                    value={exp.startDate}
-                    onChange={(e) => handleExperienceChange(index, e)}
-                  />
-                  <InputField
-                    label="End Date"
-                    name="endDate"
-                    type="date"
-                    value={exp.endDate}
-                    onChange={(e) => handleExperienceChange(index, e)}
-                  />
+                  <InputField label="Company Name" name="companyName" value={exp.companyName} onChange={(e) => handleExperienceChange(index, e)} />
+                  <InputField label="Position" name="position" value={exp.position} onChange={(e) => handleExperienceChange(index, e)} />
+                  <InputField label="Start Date" name="startDate" type="date" value={exp.startDate} onChange={(e) => handleExperienceChange(index, e)} />
+                  <InputField label="End Date" name="endDate" type="date" value={exp.endDate} onChange={(e) => handleExperienceChange(index, e)} />
                 </div>
-
                 <div className="flex items-center gap-2 px-2">
-                  <input
-                    type="checkbox"
-                    name="currentlyWorking"
-                    checked={exp.currentlyWorking}
-                    onChange={(e) => handleExperienceChange(index, e)}
-                  />
-                  <label className="text-xs font-medium">
-                    Currently Working Here
-                  </label>
+                  <input type="checkbox" name="currentlyWorking" checked={exp.currentlyWorking} onChange={(e) => handleExperienceChange(index, e)} />
+                  <label className="text-xs font-medium text-black">Currently Working Here</label>
                 </div>
-
                 {formData.experience.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeExperience(index)}
-                    className="text-[10px] font-bold uppercase tracking-widest text-red-600"
-                  >
-                    Remove
-                  </button>
+                  <button type="button" onClick={() => removeExperience(index)} className="text-[10px] font-bold uppercase tracking-widest text-red-600">Remove</button>
                 )}
               </div>
             ))}
-
-            <button
-              type="button"
-              onClick={addExperience}
-              className="text-[10px] font-bold uppercase tracking-widest text-[#951114]"
-            >
-              + Add Another Experience
-            </button>
+            <button type="button" onClick={addExperience} className="text-[10px] font-bold uppercase tracking-widest text-[#951114] ml-2 hover:underline">+ Add Another Experience</button>
           </section>
 
-          {/* Links & Skills */}
+          {/* Section 03: Links & Skills */}
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 03. Skills & Links
             </p>
-
             <div className="grid md:grid-cols-2 gap-4">
               <InputField label="Skills (comma separated)" name="skills" value={formData.skills} onChange={handleChange} />
               <InputField label="LinkedIn URL" name="linkedin" value={formData.linkedin} onChange={handleChange} />
@@ -255,7 +217,7 @@ export default function CompleteProfile() {
             </div>
           </section>
 
-          {/* Submit */}
+          {/* Submit Action */}
           <div className="pt-8 flex flex-col items-center border-t border-slate-100">
             <button
               type="submit"
@@ -264,7 +226,6 @@ export default function CompleteProfile() {
             >
               {loading ? "Saving..." : "Complete Profile"}
             </button>
-
             {message && (
               <p className={`mt-6 text-[11px] font-bold uppercase tracking-widest ${message.includes("✅") ? "text-green-600" : "text-[#951114]"}`}>
                 {message}
@@ -273,10 +234,7 @@ export default function CompleteProfile() {
           </div>
         </form>
       </div>
-
-      <p className="mt-8 text-[9px] text-slate-400 font-bold uppercase tracking-[0.4em]">
-        Verified • IET Lucknow
-      </p>
+      <p className="mt-8 text-[9px] text-slate-400 font-bold uppercase tracking-[0.4em]">Verified • IET Lucknow</p>
     </main>
   );
 }

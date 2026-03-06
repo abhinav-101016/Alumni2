@@ -99,11 +99,22 @@ function RestrictionUI({ reason }) {
   const config = configs[reason] || configs.NOT_LOGGED_IN
 
   return (
-    <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
-      <div className="mb-6 p-4 bg-slate-50 rounded-full">{config.icon}</div>
-      <h2 className="text-2xl font-black uppercase mb-2">{config.title}</h2>
-      <p className="text-slate-500 max-w-sm mb-8">{config.desc}</p>
-      <Link href={config.link} className="bg-[#951114] text-white px-8 py-3 font-bold uppercase text-xs tracking-widest hover:bg-black transition-all">
+    /* Changed bg-white to bg-gray-50 and min-h-[70vh] to h-[calc(100vh-80px)] */
+    /* Adjust the 80px based on your actual Header height */
+    <div className="min-h-[calc(100vh-80px)] w-full flex flex-col items-center justify-center p-6 text-center bg-gray-50">
+      <div className="mb-6 p-6 bg-white shadow-sm rounded-full">
+        {config.icon}
+      </div>
+      <h2 className="text-3xl font-black uppercase mb-3 tracking-tight text-gray-900">
+        {config.title}
+      </h2>
+      <p className="text-gray-500 max-w-md mb-10 text-lg leading-relaxed">
+        {config.desc}
+      </p>
+      <Link 
+        href={config.link} 
+        className="bg-[#951114] text-white px-10 py-4 font-bold uppercase text-xs tracking-[0.2em] hover:bg-gray-900 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+      >
         {config.btnText}
       </Link>
     </div>

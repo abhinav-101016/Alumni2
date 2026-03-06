@@ -1,5 +1,5 @@
 import Campaign from '@/components/Campaign';
-import Hero from '../components/Hero';
+import Hero from '@/components/Hero';
 import BulletinCarousel from '@/components/BulletinCarousal';
 import EngagementSection from '@/components/EngagementSection';
 import FeatureBanner from '@/components/FeatureBanner';

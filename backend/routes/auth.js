@@ -318,7 +318,7 @@ process.env.JWT_SECRET,
 res.cookie("token", token, {
 httpOnly: true,
 secure: process.env.NODE_ENV === "production",
-sameSite: "strict",
+sameSite: "lax",
 maxAge: 60 * 60 * 1000
 });
 
@@ -370,17 +370,27 @@ router.post("/logout", (req, res) => {
   }
 });
 
-router.get("/status", (req, res) => {
+router.get("/status", async (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ isLoggedIn: false });
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.json({ isLoggedIn: true, user: decoded });
+    
+    // FETCH FRESH DATA FROM DB
+    const user = await User.findById(decoded.id).select("-auth"); 
+
+    if (!user) {
+      return res.status(404).json({ isLoggedIn: false });
+    }
+
+    res.json({ 
+      isLoggedIn: true, 
+      user: user // Now the frontend gets the REAL accountStatus
+    });
   } catch (err) {
     res.status(401).json({ isLoggedIn: false });
   }
 });
-
 
 export default router;
