@@ -1,24 +1,18 @@
 "use client";
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 
 const Hero = () => {
   const videoRef = useRef(null);
+  const [isVideoReady, setIsVideoReady] = useState(false);
 
   useEffect(() => {
-    // Crucial for deployment: Some browsers block autoplay if not strictly handled via JS
     if (videoRef.current) {
       videoRef.current.defaultMuted = true;
       videoRef.current.muted = true;
-      const playPromise = videoRef.current.play();
-      
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // Auto-play was prevented, but we keep the poster visible
-          console.log("Autoplay handled");
-        });
-      }
+      // 4MB loads fast, but we still force play to ensure it hits the 'onLoadedData' event
+      videoRef.current.play().catch(err => console.log("Video playback note:", err));
     }
   }, []);
 
@@ -30,36 +24,41 @@ const Hero = () => {
   return (
     <section className="relative w-full bg-[#a51214] flex flex-col overflow-hidden pt-12 md:pt-20">
       
-      {/* 1. THE VIDEO PALETTE */}
+      {/* 1. THE VIDEO PALETTE - Using your 4MB compressed file */}
       <div className="relative w-full flex justify-end pt-10 md:pt-16 md:pr-16 lg:pr-24 px-6 md:px-0">
-        <div className="w-full md:w-[78%] h-[250px] md:h-[550px] relative z-10 bg-black/20">
+        <div className="w-full md:w-[78%] h-[250px] md:h-[550px] relative z-10 bg-black/10 overflow-hidden">
+          
+          {/* Subtle loading shimmer */}
+          {!isVideoReady && (
+            <div className="absolute inset-0 bg-white/5 animate-pulse z-20" />
+          )}
+
           <video 
             ref={videoRef}
             autoPlay 
             muted 
             loop 
             playsInline
-            /* Use a high-res image as poster to prevent 'Red/Black' flash on load */
-            poster="https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80"
-            className="w-full h-full object-cover shadow-2xl rounded-sm block"
-            style={{ backgroundColor: 'transparent' }} 
+            onLoadedData={() => setIsVideoReady(true)}
+            /* Standard poster to show while loading */
+            poster="https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=40&w=800"
+            className={`w-full h-full object-cover shadow-2xl rounded-sm block transition-opacity duration-700 ${isVideoReady ? 'opacity-100' : 'opacity-0'}`}
           >
-            {/* Direct reliable MP4 link for deployment */}
-            <source 
-              src="https://v.ftcdn.net/02/93/39/10/700_F_293391039_6vLpCq0N6zW8x9J8vU0PzK5I9QkL0U0Z_ST.mp4" 
-              type="video/mp4" 
-            />
+            {/* Points to public/heroVideo.mp4 */}
+            <source src="/heroVideo.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
           </video>
         </div>
       </div>
 
-      {/* 2. THE TEXT - Left Aligned & Precision Baseline */}
+      {/* 2. THE TEXT - Left Aligned on Mobile & Precision Baseline for Desktop */}
       <div className="relative z-30 max-w-7xl mx-auto w-full px-6">
         <div className="flex flex-col items-start justify-end">
           <motion.h1 
             initial="hidden"
             animate="visible"
             variants={fadeInUp}
+            /* md:-mt-[98px] aligns the first line's baseline with the video bottom */
             className="text-white text-4xl md:text-8xl font-black uppercase leading-[0.8] tracking-tighter mt-8 md:-mt-[98px] mb-16 md:mb-20 drop-shadow-xl text-left"
           >
             Connections Begin Here <br /> 
@@ -77,7 +76,6 @@ const Hero = () => {
             </a>
           </motion.div>
 
-          {/* Nav Items - Left Aligned for Mobile */}
           {[
             { title: "Update your info", desc: "New address? New email? Let us know!" },
             { title: "Explore Programs", desc: "Build your network and get involved." },
