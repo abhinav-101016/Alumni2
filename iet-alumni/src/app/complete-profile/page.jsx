@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 
 const InputField = ({ label, name, value, onChange, type = "text" }) => (
   <div className="flex flex-col gap-1.5 px-2">
@@ -19,12 +20,14 @@ const InputField = ({ label, name, value, onChange, type = "text" }) => (
 
 export default function CompleteProfile() {
   const router = useRouter();
-  const [authLoading, setAuthLoading] = useState(true); // Loading state for session check
+  const [authLoading, setAuthLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   const [formData, setFormData] = useState({
     bio: "",
+    profilePicUrl: "",
     skills: "",
     linkedin: "",
     github: "",
@@ -40,9 +43,6 @@ export default function CompleteProfile() {
     ],
   });
 
-  /* =========================
-      PROTECT ROUTE (HTTP-ONLY)
-  ========================== */
   useEffect(() => {
     const verifyUser = async () => {
       try {
@@ -54,7 +54,6 @@ export default function CompleteProfile() {
           router.replace("/login");
         } else {
           const data = await res.json();
-          // If profile is already complete, don't let them stay here
           if (data.user?.isProfileComplete) {
             router.replace("/dashboard");
           } else {
@@ -67,6 +66,43 @@ export default function CompleteProfile() {
     };
     verifyUser();
   }, [router]);
+
+  const handleUpload = () => {
+    if (!window.cloudinary) return alert("Cloudinary library not ready. Please refresh.");
+
+    const widget = window.cloudinary.createUploadWidget({
+      cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+      uploadPreset: 'alumni_preset',
+      cropping: true,
+      croppingAspectRatio: 1,
+      showSkipCropButton: false,
+      styles: {
+        palette: {
+          window: "#FFFFFF",
+          windowBorder: "#90A0B3",
+          tabIcon: "#951114",
+          inactiveTabIcon: "#0E2F5A",
+          menuIcons: "#5A616A",
+          link: "#951114",
+          action: "#951114",
+          inProgress: "#951114",
+          complete: "#20B832",
+          error: "#F44235",
+          textDark: "#000000",
+          textLight: "#FFFFFF"
+        }
+      }
+    }, (error, result) => {
+      if (!error && result && result.event === "success") {
+        setFormData(prev => ({ ...prev, profilePicUrl: result.info.secure_url }));
+      }
+    });
+    widget.open();
+  };
+
+  const removePhoto = () => {
+    setFormData(prev => ({ ...prev, profilePicUrl: "" }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -95,44 +131,28 @@ export default function CompleteProfile() {
     setFormData((prev) => ({ ...prev, experience: updated }));
   };
 
-  /* =========================
-      SUBMIT (HTTP-ONLY)
-  ========================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/profile/complete`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // CRUCIAL: Sends the HTTP-only cookie
-          body: JSON.stringify({
-            ...formData,
-            skills: formData.skills ? formData.skills.split(",").map((s) => s.trim()) : [],
-          }),
-        }
-      );
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/profile/complete`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          ...formData,
+          skills: formData.skills ? formData.skills.split(",").map((s) => s.trim()) : [],
+        }),
+      });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Update failed");
-      }
+      if (!res.ok) throw new Error(data.message || "Update failed");
 
       setMessage("✅ Profile completed successfully");
-
-      // Dispatch event so Header refreshes status immediately
       window.dispatchEvent(new Event("authChange"));
-
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
+      setTimeout(() => router.push("/dashboard"), 1500);
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -140,28 +160,65 @@ export default function CompleteProfile() {
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-[#951114]"></div>
-      </div>
-    );
-  }
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-[#951114]"></div>
+    </div>
+  );
 
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
+      <Script 
+        src="https://upload-widget.cloudinary.com/latest/global/all.js" 
+        onLoad={() => setScriptLoaded(true)}
+      />
+
       <div className="w-full lg:w-1/2 bg-white border border-slate-200 shadow-sm overflow-hidden rounded-sm">
         <div className="pt-10 pb-6 text-center border-b border-slate-100">
           <div className="w-10 h-1 bg-[#951114] mx-auto mb-4" />
-          <h2 className="text-3xl font-black text-black uppercase tracking-tighter">
-            Complete Profile
-          </h2>
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
-            Alumni Professional Information
-          </p>
+          <h2 className="text-3xl font-black text-black uppercase tracking-tighter">Complete Profile</h2>
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Alumni Professional Information</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10">
+          
+          {/* Section 00: Profile Picture */}
+          <section className="flex flex-col items-center border-b border-slate-100 pb-10">
+            <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 w-full px-2 flex items-center gap-3">
+              <span className="w-4 h-px bg-[#951114]"></span> 00. Profile Identity
+            </p>
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-32 h-32 rounded-sm border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center relative">
+                {formData.profilePicUrl ? (
+                  <>
+                    <img 
+                      src={formData.profilePicUrl.replace('/upload/', '/upload/w_300,h_300,c_thumb,g_face/')} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                    <button 
+                      type="button"
+                      onClick={removePhoto}
+                      className="absolute top-1 right-1 bg-white/90 p-1 rounded-full text-[8px] font-black text-red-600 border border-slate-200 hover:bg-red-50"
+                    >
+                      ✕
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest text-center px-4">Upload Professional Headshot</span>
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={!scriptLoaded}
+                onClick={handleUpload}
+                className="px-6 py-2 border border-black text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all duration-300 disabled:opacity-50"
+              >
+                {formData.profilePicUrl ? "Replace Photo" : "Upload Photo"}
+              </button>
+            </div>
+          </section>
+
           {/* Section 01: Bio */}
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
@@ -179,7 +236,7 @@ export default function CompleteProfile() {
             </div>
           </section>
 
-          {/* Section 02: Experience */}
+          {/* Section 02: Work Experience */}
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 02. Work Experience
@@ -217,15 +274,17 @@ export default function CompleteProfile() {
             </div>
           </section>
 
-          {/* Submit Action */}
           <div className="pt-8 flex flex-col items-center border-t border-slate-100">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !formData.profilePicUrl}
               className="w-full max-w-[240px] py-4 bg-[#951114] text-white text-[11px] font-black uppercase tracking-[0.3em] hover:bg-black transition-all duration-300 active:scale-95 shadow-md disabled:opacity-50"
             >
               {loading ? "Saving..." : "Complete Profile"}
             </button>
+            {!formData.profilePicUrl && (
+              <p className="mt-4 text-[9px] font-black text-[#951114] uppercase tracking-[0.2em]">Profile photo is mandatory</p>
+            )}
             {message && (
               <p className={`mt-6 text-[11px] font-bold uppercase tracking-widest ${message.includes("✅") ? "text-green-600" : "text-[#951114]"}`}>
                 {message}

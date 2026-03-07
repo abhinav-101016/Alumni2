@@ -10,6 +10,7 @@ router.put(
   authMiddleware,
   [
     body("bio").trim().isLength({ min: 20 }).withMessage("Bio must be at least 20 characters"),
+    body("profilePicUrl").notEmpty().withMessage("Profile picture is required for alumni"),
     body("experience").isArray({ min: 1 }).withMessage("At least one experience is required"),
     body("experience.*.companyName").trim().notEmpty().withMessage("Company name is required"),
     body("experience.*.position").trim().notEmpty().withMessage("Position is required"),
@@ -35,24 +36,25 @@ router.put(
         return res.status(400).json({ message: "Validation failed", errors: errors.array() });
       }
 
-      const { bio, experience, skills, linkedin, twitter, github, portfolio } = req.body;
+      const { bio, experience, skills, linkedin, twitter, github, portfolio, profilePicUrl } = req.body;
 
       const user = await User.findById(req.user.id);
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      // 1. Initialize objects if they don't exist
+      // Initialize nested structures
       if (!user.profile) user.profile = {};
       if (!user.professional) user.professional = {};
       if (!user.profile.socialLinks) user.profile.socialLinks = {};
 
-      // 2. Update Profile Block
+      // Update Profile Fields
       user.profile.bio = bio;
+      user.profile.profilePicUrl = profilePicUrl; // Stores the Cloudinary Secure URL
       user.profile.socialLinks.linkedin = linkedin || "";
       user.profile.socialLinks.twitter = twitter || "";
       user.profile.socialLinks.github = github || "";
       user.profile.socialLinks.portfolio = portfolio || "";
 
-      // 3. Update Professional Block
+      // Update Professional Fields
       user.professional.experiences = experience.map((exp) => ({
         company: exp.companyName,
         designation: exp.position,
@@ -63,13 +65,12 @@ router.put(
 
       user.professional.skills = Array.isArray(skills) ? skills : [];
 
-      // 4. SET THE FLAG EXPLICITLY
+      // Set flags
       user.isProfileComplete = true;
 
-      // 5. CRITICAL: Tell Mongoose to watch these nested paths
+      // Mark nested paths as modified
       user.markModified('profile');
       user.markModified('professional');
-      user.markModified('isProfileComplete');
 
       await user.save();
 
