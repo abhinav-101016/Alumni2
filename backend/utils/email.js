@@ -4,17 +4,15 @@ dotenv.config();
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
-  port: 587,
-  secure: false, // Must be false for 587
+  port: 465,
+  secure: true, 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
-  tls: {
-    // This is often required by cloud providers to pass through their internal proxy
-    ciphers: 'SSLv3',
-    rejectUnauthorized: false
-  },
+logger: true,
+  debug: true,
+  
   connectionTimeout: 10000, // Wait 10 seconds before giving up
 });
 export const sendVerificationEmail = async (email, otp) => {
