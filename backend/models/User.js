@@ -59,7 +59,7 @@ const userSchema = new mongoose.Schema(
   verification: {
     isEmailVerified: { type: Boolean, default: false },
     isPhoneVerified: { type: Boolean, default: false },
-    isVerifiedByAdmin: { type: Boolean, default: false },
+    isVerifiedByAdmin: { type: Boolean, default: true },
   },
 
   accountStatus: {
