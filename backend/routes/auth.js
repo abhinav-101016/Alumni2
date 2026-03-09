@@ -83,7 +83,7 @@ router.post(
         verification: {
           isEmailVerified: false,
           isPhoneVerified: false,
-          isVerifiedByAdmin: false
+          isVerifiedByAdmin: true
         },
         accountStatus: "pending",
         profile: {
