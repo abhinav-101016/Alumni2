@@ -1,69 +1,99 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, createContext, useContext } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Lock, Clock, UserCheck, AlertCircle } from "lucide-react"
+import { ChatProvider } from "@/context/ChatContext"
+import ChatSidebar from "@/components/chat/ChatSidebar"
+
+// ─────────────────────────────────────────────────────────────
+// Auth context — lets any child component read the current user
+// ─────────────────────────────────────────────────────────────
+const AuthContext = createContext(null)
+
+export function useAuth() {
+  return useContext(AuthContext)
+}
 
 export default function ProtectedRoute({ children }) {
-  const [status, setStatus] = useState("loading") // loading, authenticated, restricted
+  const [status, setStatus] = useState("loading")
   const [reason, setReason] = useState(null)
-  const router = useRouter()
+  const [user,   setUser]   = useState(null)
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/status`, {
-          credentials: "include",
-        })
-        
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/status`,
+          { credentials: "include" }
+        )
+
         if (!res.ok) {
-          setStatus("restricted")
-          setReason("NOT_LOGGED_IN")
-          return
+          setStatus("restricted"); setReason("NOT_LOGGED_IN"); return
         }
 
-        const { user } = await res.json()
+        const data = await res.json()
+        const user = data.user
 
-        // 1. Check Account Status (Suspended/Rejected)
         if (user.accountStatus !== "active") {
-          setStatus("restricted")
-          setReason("ACCOUNT_INACTIVE")
-          return
+          setStatus("restricted"); setReason("ACCOUNT_INACTIVE"); return
         }
-
-        // 2. Check Admin Verification
         if (!user.verification?.isVerifiedByAdmin) {
-          setStatus("restricted")
-          setReason("PENDING_ADMIN")
-          return
+          setStatus("restricted"); setReason("PENDING_ADMIN"); return
         }
-
-        // 3. Check Profile Completion
         if (user.role === "alumni" && !user.isProfileComplete) {
-          setStatus("restricted")
-          setReason("PROFILE_INCOMPLETE")
-          return
+          setStatus("restricted"); setReason("PROFILE_INCOMPLETE"); return
         }
 
+        setUser(user)
         setStatus("authenticated")
       } catch (err) {
-        setStatus("restricted")
-        setReason("ERROR")
+        setStatus("restricted"); setReason("ERROR")
       }
     }
 
     checkAuth()
+    window.addEventListener("authChange", checkAuth)
+    return () => window.removeEventListener("authChange", checkAuth)
   }, [])
 
-  if (status === "loading") return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#951114] border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-900 font-black text-sm uppercase tracking-widest">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (status === "restricted") {
     return <RestrictionUI reason={reason} />
   }
 
-  return children
+  const userId = user?._id || user?.id || null
+
+  // ── KEY FIX ──────────────────────────────────────────────────
+  // ChatProvider AND ChatSidebar both live here — inside the same
+  // provider tree. Header (in root layout) is outside and only reads
+  // the context safely via useContext(ChatContext) which returns null
+  // on public pages and the real value on protected pages.
+  // ─────────────────────────────────────────────────────────────
+  return (
+    <AuthContext.Provider value={user}>
+      <ChatProvider isLoggedIn={true}>
+        {children}
+        {/* ChatSidebar must be INSIDE ChatProvider to read context correctly */}
+        <ChatSidebar currentUserId={userId} />
+      </ChatProvider>
+    </AuthContext.Provider>
+  )
 }
 
+// ─────────────────────────────────────────────────────────────
+// RestrictionUI
+// ─────────────────────────────────────────────────────────────
 function RestrictionUI({ reason }) {
   const configs = {
     NOT_LOGGED_IN: {
@@ -93,14 +123,19 @@ function RestrictionUI({ reason }) {
       desc: "To access the directory and community features, please finish setting up your profile.",
       btnText: "Complete Profile Now",
       link: "/complete-profile"
+    },
+    ERROR: {
+      icon: <AlertCircle className="text-red-600" size={48} />,
+      title: "Something went wrong",
+      desc: "Unable to verify your session. Please try again.",
+      btnText: "Go to Login",
+      link: "/login"
     }
   }
 
   const config = configs[reason] || configs.NOT_LOGGED_IN
 
   return (
-    /* Changed bg-white to bg-gray-50 and min-h-[70vh] to h-[calc(100vh-80px)] */
-    /* Adjust the 80px based on your actual Header height */
     <div className="min-h-[calc(100vh-80px)] w-full flex flex-col items-center justify-center p-6 text-center bg-gray-50">
       <div className="mb-6 p-6 bg-white shadow-sm rounded-full">
         {config.icon}
@@ -111,8 +146,8 @@ function RestrictionUI({ reason }) {
       <p className="text-gray-500 max-w-md mb-10 text-lg leading-relaxed">
         {config.desc}
       </p>
-      <Link 
-        href={config.link} 
+      <Link
+        href={config.link}
         className="bg-[#951114] text-white px-10 py-4 font-bold uppercase text-xs tracking-[0.2em] hover:bg-gray-900 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
       >
         {config.btnText}
