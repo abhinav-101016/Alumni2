@@ -111,10 +111,7 @@ export default function Login() {
                 className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#951114] outline-none text-xs text-black font-medium placeholder:text-slate-400 transition-all"
               />
               <div className="text-right">
-                <Link
-                  href="/"
-                  className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-[#951114] transition-colors"
-                >
+                  <Link href="/forgot-password" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-[#951114] transition-colors">
                   Forgot Password?
                 </Link>
               </div>

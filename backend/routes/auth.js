@@ -290,4 +290,131 @@ router.get("/status", async (req, res) => {
   }
 });
 
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    // Don't reveal whether user exists — same response either way
+    if (!user) {
+      return res.status(200).json({ message: "If that email is registered, an OTP has been sent." });
+    }
+
+    if (user.accountStatus === "suspended" || user.accountStatus === "rejected") {
+      return res.status(403).json({ message: "Account access denied" });
+    }
+
+    const otp = generateOTP();
+    const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY); // 10 minutes
+
+    // Reuse the emailVerification field to store password reset OTP
+    user.auth.emailVerification = { otp, otpExpiresAt };
+    await user.save();
+
+    // Reuse your existing email utility
+    await sendVerificationEmail(email, otp);
+
+    res.status(200).json({ message: "If that email is registered, an OTP has been sent." });
+  } catch (error) {
+    console.error("forgot-password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =====================================================
+   FORGOT PASSWORD — VERIFY OTP
+   POST /api/auth/verify-reset-otp
+   Body: { email, otp }
+===================================================== */
+router.post("/verify-reset-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    const verification = user.auth.emailVerification;
+
+    if (
+      !verification ||
+      verification.otp !== otp ||
+      Date.now() > new Date(verification.otpExpiresAt).getTime()
+    ) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // OTP is valid — issue a short-lived reset token
+    // We don't clear the OTP yet so the reset step can re-verify
+    const resetToken = jwt.sign(
+      { id: user._id, purpose: "password-reset" },
+      process.env.JWT_SECRET,
+      { expiresIn: "10m" }
+    );
+
+    res.status(200).json({ message: "OTP verified", resetToken });
+  } catch (error) {
+    console.error("verify-reset-otp error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =====================================================
+   FORGOT PASSWORD — RESET PASSWORD
+   POST /api/auth/reset-password
+   Body: { resetToken, newPassword }
+===================================================== */
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { resetToken, newPassword } = req.body;
+
+    if (!resetToken || !newPassword) {
+      return res.status(400).json({ message: "Token and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    // Verify reset token
+    let decoded;
+    try {
+      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({ message: "Reset session expired. Please start over." });
+    }
+
+    if (decoded.purpose !== "password-reset") {
+      return res.status(400).json({ message: "Invalid reset token" });
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Hash new password and clear OTP
+    user.auth.passwordHash        = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    user.auth.emailVerification   = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.error("reset-password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 export default router;
