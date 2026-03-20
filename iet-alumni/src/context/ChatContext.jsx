@@ -61,12 +61,33 @@ export function ChatProvider({ children, isLoggedIn }) {
     socket.on("connect",    () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
 
-    socket.on("message:new", (msg) => {
-      const roomId = msg.roomId?.toString() || msg.roomId;
-      setMessages((prev) => ({
+    // REPLACE with this:
+socket.on("message:new", (msg) => {
+  const roomId = msg.roomId?.toString() || msg.roomId;
+  setMessages((prev) => {
+    const existing = prev[roomId] || [];
+
+    // Skip if this exact message already exists (real ID match)
+    const alreadyExists = existing.some((m) => m._id === msg._id);
+    if (alreadyExists) return prev;
+
+    // Replace optimistic temp message if tempId matches
+    const hasTempVersion = msg.tempId && existing.some((m) => m._id === msg.tempId);
+    if (hasTempVersion) {
+      return {
         ...prev,
-        [roomId]: [...(prev[roomId] || []), msg],
-      }));
+        [roomId]: existing.map((m) =>
+          m._id === msg.tempId ? { ...msg, status: "sent" } : m
+        ),
+      };
+    }
+
+    // New message from someone else — just append
+    return {
+      ...prev,
+      [roomId]: [...existing, msg],
+    };
+  });
       setRooms((prev) =>
         prev.map((r) =>
           r._id === roomId
