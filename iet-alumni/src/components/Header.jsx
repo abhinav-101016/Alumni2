@@ -22,9 +22,6 @@ function useSafeChat() {
   }
 }
 
-// Works from anywhere — inside or outside ChatProvider
-// If inside provider: calls openSidebar directly
-// If outside provider: fires a window event that ChatContext listens to
 function openChat(openSidebar) {
   if (openSidebar) {
     openSidebar()
@@ -38,6 +35,7 @@ export default function Header() {
 
   const [isLoggedIn,    setIsLoggedIn]    = useState(false)
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [userRole,      setUserRole]      = useState(null)   // ← NEW
   const [pendingCount,  setPendingCount]  = useState(0)
   const [open,          setOpen]          = useState(false)
   const [active,        setActive]        = useState(null)
@@ -59,15 +57,18 @@ export default function Header() {
         const data = await res.json()
         setIsLoggedIn(true)
         setCurrentUserId(data.user?._id || data.user?.id || data.userId || null)
+        setUserRole(data.user?.role || null)   // ← NEW
         fetchPendingCount()
       } else {
         setIsLoggedIn(false)
         setCurrentUserId(null)
+        setUserRole(null)                      // ← NEW
         setPendingCount(0)
       }
     } catch {
       setIsLoggedIn(false)
       setCurrentUserId(null)
+      setUserRole(null)                        // ← NEW
     }
   }
 
@@ -104,15 +105,28 @@ export default function Header() {
 
   const navItems = ["Connect", "Services", "Committees", "Giving", "Chat"]
 
+  // ── Connect items are role-aware ─────────────────────────────────────────────
   const menuData = {
-    Connect:    ["Alumni Directory","My Network","Connection Requests","Alumnae Resources","Featured Alumni","Affinity Programs","Professional Alliances","Regional Networks","Alumni Programs","Volunteer Leadership","Young Alumni","Class Correspondence"],
-    Services:   ["Alumni Extras","Order a Transcript","Vistex Online Courses","Epitome Yearbook"],
-    Committees: ["Executive Committee","Advisory Committee"],
-    Giving:     ["IET Lucknow Fund","Parents' Council","Recognition Societies","Planned Giving","Matching Gift","Partnerships","Giving Day + March Mania"],
+    Connect: [
+      "Alumni Directory",
+      ...(userRole === "alumni" || userRole === "admin" ? ["Student Directory"] : []),  // ← NEW
+      "My Network", "Connection Requests", "Alumnae Resources", "Featured Alumni",
+      "Affinity Programs", "Professional Alliances", "Regional Networks",
+      "Alumni Programs", "Volunteer Leadership", "Young Alumni", "Class Correspondence",
+    ],
+    Services:   ["Alumni Extras", "Order a Transcript", "Vistex Online Courses", "Epitome Yearbook"],
+    Committees: ["Executive Committee", "Advisory Committee"],
+    Giving:     ["IET Lucknow Fund", "Parents' Council", "Recognition Societies", "Planned Giving", "Matching Gift", "Partnerships", "Giving Day + March Mania"],
     Chat:       [],
   }
 
-  const clickableItems = ["Alumni Directory","My Network","Connection Requests","Featured Alumni","Alumnae Resources","Affinity Programs","Executive Committee","Advisory Committee"]
+  // ── "Student Directory" is now clickable ─────────────────────────────────────
+  const clickableItems = [
+    "Alumni Directory", "Student Directory",   // ← NEW
+    "My Network", "Connection Requests", "Featured Alumni",
+    "Alumnae Resources", "Affinity Programs",
+    "Executive Committee", "Advisory Committee",
+  ]
 
   const handleProfileClick = () => { router.push("/dashboard"); setOpen(false) }
   const handleLoginClick   = () => { router.push("/login");     setOpen(false) }
@@ -126,6 +140,7 @@ export default function Header() {
     finally {
       setIsLoggedIn(false)
       setCurrentUserId(null)
+      setUserRole(null)                        // ← NEW
       setPendingCount(0)
       window.dispatchEvent(new Event("authChange"))
       setOpen(false)
@@ -135,11 +150,12 @@ export default function Header() {
 
   const getRoute = (link) => {
     if (link === "Alumni Directory")    return "/alumni"
+    if (link === "Student Directory")   return "/students"   // ← NEW
     if (link === "My Network")          return "/connections"
     if (link === "Connection Requests") return "/connections/requests"
     const slug = link.toLowerCase().replace(/\s+/g, "-")
-    if (["Featured Alumni","Alumnae Resources","Affinity Programs"].includes(link)) return `/connect/${slug}`
-    if (["Executive Committee","Advisory Committee"].includes(link))                return `/committee/${slug}`
+    if (["Featured Alumni", "Alumnae Resources", "Affinity Programs"].includes(link)) return `/connect/${slug}`
+    if (["Executive Committee", "Advisory Committee"].includes(link))                 return `/committee/${slug}`
     return `/${slug}`
   }
 
@@ -216,7 +232,6 @@ export default function Header() {
                 if (item === "Chat") {
                   return (
                     <li key={i} className="flex items-center gap-3">
-                      {/* Bell — only when scrolled (utility bar hidden) */}
                       {scrolled && isLoggedIn && (
                         <button
                           onClick={() => router.push("/connections/requests")}
@@ -226,8 +241,6 @@ export default function Header() {
                           <PendingBadge />
                         </button>
                       )}
-
-                      {/* Message icon — opens chat sidebar */}
                       {isLoggedIn && (
                         <button
                           onClick={handleOpenChat}
@@ -238,8 +251,6 @@ export default function Header() {
                           <UnreadBadge />
                         </button>
                       )}
-
-                      {/* Logout */}
                       {isLoggedIn && (
                         <button
                           onClick={handleLogout}
@@ -248,8 +259,6 @@ export default function Header() {
                           <LogOut size={14} /> Logout
                         </button>
                       )}
-
-                      {/* Login (not logged in) */}
                       {!isLoggedIn && (
                         <button
                           onClick={handleLoginClick}

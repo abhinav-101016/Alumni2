@@ -13,7 +13,7 @@ export default function MyConnectionsPage() {
 
   useEffect(() => {
     getMyConnections()
-      .then((res) => setConnections(res.data))
+      .then((res) => setConnections(res.data ?? []))   // ← guard null res.data
       .finally(() => setLoading(false));
   }, []);
 
@@ -27,9 +27,11 @@ export default function MyConnectionsPage() {
   const getInitials = (name) =>
     name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
-  const filtered = connections.filter((c) =>
-    c.user.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = connections
+    .filter((c) => c.user != null)                                             // ← skip deleted/null users
+    .filter((c) =>
+      c.user.name?.toLowerCase().includes(search.toLowerCase())
+    );
 
   return (
     <div className="w-full min-h-screen bg-white font-sans antialiased text-slate-900">
@@ -39,7 +41,7 @@ export default function MyConnectionsPage() {
             <div>
               <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-2">My Network</h1>
               <p className="text-slate-600 text-lg font-medium">
-                {connections.length} connection{connections.length !== 1 ? "s" : ""}
+                {filtered.length} connection{filtered.length !== 1 ? "s" : ""}
               </p>
             </div>
             <div className="flex gap-3">
@@ -99,7 +101,9 @@ export default function MyConnectionsPage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-2xl font-black text-slate-900 group-hover:text-[#800000] transition-colors">{user.name}</h3>
                     <p className="text-[#800000] font-bold text-sm uppercase tracking-wide mt-0.5">
-                      {currentExp ? `${currentExp.designation} · ${currentExp.company}` : `${user.academic?.branch || ""} · Class of ${user.academic?.passingYear || ""}`}
+                      {currentExp
+                        ? `${currentExp.designation} · ${currentExp.company}`
+                        : `${user.academic?.branch || ""} · Class of ${user.academic?.passingYear || ""}`}
                     </p>
                     <div className="flex flex-wrap gap-3 mt-2">
                       <span className="text-slate-400 text-xs font-medium uppercase tracking-widest">
@@ -112,7 +116,9 @@ export default function MyConnectionsPage() {
                     {user.professional?.skills?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-3">
                         {user.professional.skills.slice(0, 4).map((skill, i) => (
-                          <span key={i} className="px-3 py-1 bg-slate-50 text-slate-500 text-[10px] font-black rounded-lg border border-slate-200 uppercase tracking-wide">{skill}</span>
+                          <span key={i} className="px-3 py-1 bg-slate-50 text-slate-500 text-[10px] font-black rounded-lg border border-slate-200 uppercase tracking-wide">
+                            {skill}
+                          </span>
                         ))}
                       </div>
                     )}
