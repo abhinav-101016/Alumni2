@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { MapPin, Briefcase } from "lucide-react";
+import { MapPin, Briefcase, Quote } from "lucide-react";
 
 const ExecutiveCommittee = () => {
   const members = [
@@ -9,9 +9,18 @@ const ExecutiveCommittee = () => {
       name: "Mr. Anjani Kumar Srivastava",
       address:
         "SHUBHKAMNA, 4/C-815, Sector-4, Gomtinagar Extension, Lucknow – 226010, Uttar Pradesh",
-      occupation: "Self-Employed",
-      image:
-        "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=400&h=400&fit=crop",
+      occupation: "Self-Employed (Real Estate, Mutual Funds & Railway Consultancy)",
+      image: "/images/president.jpeg",
+      bio: {
+        highlight: "Founder Student, IET Lucknow — Batch of 1984–88 (B.Tech, Electronics & Communication Engineering)",
+        points: [
+          "Actively contributed to institution-building as a student — initiated the cooperative mess system in A-Block Hostel (1985) and guided similar setups across other blocks.",
+          "Co-founded ISSACC (INSTECH Students Sports & Cultural Council) in 1986–87 and served as a student signatory for IET's official emblem.",
+          "36+ years of senior experience in Sales & Services with MNCs — specialising in electrical & electronics systems for Railway Rolling Stock, including India's first Vande Bharat rake (T-18).",
+          "Took VRS in March 2024; now based in Lucknow as a real estate & mutual fund investor and industry consultant.",
+        ],
+        quote: "Strong alumni engagement is the backbone of a great institution.",
+      },
       details: [
         "S/o (Late) Shri Hari Krishna Srivastava.",
         "Entrusted with executive powers and overall supervision of the Society.",
@@ -130,7 +139,7 @@ const ExecutiveCommittee = () => {
             <div className="flex flex-col md:flex-row gap-10">
 
               {/* Image */}
-              <div className="relative w-52 h-52 mx-auto md:mx-0">
+              <div className="relative w-52 h-52 mx-auto md:mx-0 flex-shrink-0">
                 <Image
                   src={member.image}
                   alt={member.name}
@@ -149,17 +158,16 @@ const ExecutiveCommittee = () => {
                   {member.name}
                 </h3>
 
-                {/* Increased gap here */}
                 <div className="grid md:grid-cols-2 gap-8 mt-8">
                   <div className="flex gap-3">
-                    <MapPin className="text-[#951114]" size={18} />
+                    <MapPin className="text-[#951114] flex-shrink-0" size={18} />
                     <p className="text-sm text-slate-700 leading-relaxed">
                       {member.address}
                     </p>
                   </div>
 
                   <div className="flex gap-3">
-                    <Briefcase className="text-[#951114]" size={18} />
+                    <Briefcase className="text-[#951114] flex-shrink-0" size={18} />
                     <p className="text-sm text-slate-700">
                       <strong>Occupation:</strong> {member.occupation}
                     </p>
@@ -173,6 +181,35 @@ const ExecutiveCommittee = () => {
                     </p>
                   ))}
                 </div>
+
+                {/* President Bio — only rendered if bio exists */}
+                {member.bio && (
+                  <div className="mt-10 border-t border-slate-100 pt-8 space-y-6">
+
+                    {/* Highlight badge */}
+                    <p className="inline-block bg-[#951114]/8 text-[#951114] text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded">
+                      {member.bio.highlight}
+                    </p>
+
+                    {/* Bio points */}
+                    <ul className="space-y-3">
+                      {member.bio.points.map((point, i) => (
+                        <li key={i} className="flex gap-3 text-sm text-slate-700 leading-relaxed">
+                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#951114] flex-shrink-0"></span>
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Pull quote */}
+                    <blockquote className="flex gap-3 items-start border-l-4 border-[#951114] pl-5 py-1">
+                      <Quote className="text-[#951114] flex-shrink-0 mt-0.5" size={16} />
+                      <p className="text-sm italic text-slate-600">
+                        "{member.bio.quote}"
+                      </p>
+                    </blockquote>
+                  </div>
+                )}
               </div>
             </div>
           </article>
