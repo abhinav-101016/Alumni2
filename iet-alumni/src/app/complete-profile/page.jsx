@@ -55,7 +55,7 @@ export default function CompleteProfile() {
         } else {
           const data = await res.json();
           if (data.user?.isProfileComplete) {
-            router.replace("/dashboard");
+            router.replace("/");
           } else {
             setAuthLoading(false);
           }
@@ -152,7 +152,7 @@ export default function CompleteProfile() {
 
       setMessage("✅ Profile completed successfully");
       window.dispatchEvent(new Event("authChange"));
-      setTimeout(() => router.push("/dashboard"), 1500);
+      setTimeout(() => router.push("/"), 1500);
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {

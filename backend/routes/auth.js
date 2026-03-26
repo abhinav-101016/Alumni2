@@ -32,21 +32,23 @@ const loginLimiter = rateLimit({
 ===================================================== */
 router.post(
   "/register",
-  [
-    body("name").isLength({ min: 2 }),
-    body("email").isEmail(),
-    body("phone").isLength({ min: 10 }),
-    body("password").isLength({ min: 6 }),
-    body("dob").isISO8601(),
-    body("passingYear").isInt(),
-    body("rollNumber").notEmpty(),
-    body("gender").isIn(["male", "female", "other"]),
-    body("course").isIn(["Btech", "Mtech", "MCA", "MBA"]),
+   [
+    body("name").isLength({ min: 2 }).withMessage("Name must be at least 2 characters"),
+    body("email").isEmail().withMessage("Invalid email address"),
+    body("phone")
+      .matches(/^[0-9]{10}$/)
+      .withMessage("Phone must be exactly 10 digits"),
+    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
+    body("dob").isISO8601().withMessage("Invalid date of birth"),
+    body("passingYear").isInt().withMessage("Invalid passing year"),
+    body("rollNumber").notEmpty().withMessage("Roll number is required"),
+    body("gender").isIn(["male", "female", "other"]).withMessage("Invalid gender"),
+    body("course").isIn(["Btech", "Mtech", "MCA", "MBA"]).withMessage("Invalid course"),
   ],
   async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+   if (!errors.isEmpty()) {
+      return res.status(400).json({ message: errors.array()[0].msg });  
     }
 
     try {

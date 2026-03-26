@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link"
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
@@ -76,24 +77,24 @@ const Hero = () => {
             </a>
           </motion.div>
 
-          {[
-            { title: "Update your info", desc: "New address? New email? Let us know!" },
-            { title: "Explore Programs", desc: "Build your network and get involved." },
-            { title: "Attend an Event", desc: "Connect with alumni in-person or online." }
-          ].map((item, idx) => (
-            <motion.div key={idx} variants={fadeInUp} initial="hidden" animate="visible" className="relative flex flex-col items-start text-left">
-              <div className="block md:hidden w-24 h-[2px] bg-white/60 mb-10" />
-              <a href="#" className="flex flex-col px-0 md:px-10 border-l-0 md:border-l border-white/20 group mb-10 md:mb-0">
-                <h3 className="text-white text-2xl md:text-3xl font-serif font-medium mb-3 leading-tight tracking-tight">
-                  {item.title}
-                </h3>
-                <p className="text-red-100 text-lg mb-6 opacity-90 max-w-[280px] md:max-w-none">
-                  {item.desc}
-                </p>
-                <ArrowRight className="text-white group-hover:translate-x-3 transition-transform" size={32} />
-              </a>
-            </motion.div>
-          ))}
+       {[
+  { title: "Alumni Directory", desc: "Browse and connect with IET Lucknow graduates across the world.", href: "/alumni" },
+  { title: "My Network", desc: "View your connections and grow your professional circle.", href: "/connections" },
+  { title: "Featured Alumni", desc: "Meet our distinguished alumni making an impact.", href: "/connect/featured-alumni" }
+].map((item, idx) => (
+  <motion.div key={idx} variants={fadeInUp} initial="hidden" animate="visible" className="relative flex flex-col items-start text-left">
+    <div className="block md:hidden w-24 h-[2px] bg-white/60 mb-10" />
+    <Link href={item.href} className="flex flex-col px-0 md:px-10 border-l-0 md:border-l border-white/20 group mb-10 md:mb-0">
+      <h3 className="text-white text-2xl md:text-3xl font-serif font-medium mb-3 leading-tight tracking-tight">
+        {item.title}
+      </h3>
+      <p className="text-red-100 text-lg mb-6 opacity-90 max-w-[280px] md:max-w-none">
+        {item.desc}
+      </p>
+      <ArrowRight className="text-white group-hover:translate-x-3 transition-transform" size={32} />
+    </Link>
+  </motion.div>
+))}
         </div>
       </div>
     </section>

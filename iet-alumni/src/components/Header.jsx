@@ -12,7 +12,7 @@ import {
 import "@fontsource/playfair-display/700.css"
 import { ChatContext } from "@/context/ChatContext"
 
-// Safe hook — works both inside and outside ChatProvider
+
 function useSafeChat() {
   const ctx = useContext(ChatContext)
   return {
@@ -35,7 +35,7 @@ export default function Header() {
 
   const [isLoggedIn,    setIsLoggedIn]    = useState(false)
   const [currentUserId, setCurrentUserId] = useState(null)
-  const [userRole,      setUserRole]      = useState(null)   // ← NEW
+  const [userRole,      setUserRole]      = useState(null)  
   const [pendingCount,  setPendingCount]  = useState(0)
   const [open,          setOpen]          = useState(false)
   const [active,        setActive]        = useState(null)
@@ -57,18 +57,18 @@ export default function Header() {
         const data = await res.json()
         setIsLoggedIn(true)
         setCurrentUserId(data.user?._id || data.user?.id || data.userId || null)
-        setUserRole(data.user?.role || null)   // ← NEW
+        setUserRole(data.user?.role || null)  
         fetchPendingCount()
       } else {
         setIsLoggedIn(false)
         setCurrentUserId(null)
-        setUserRole(null)                      // ← NEW
+        setUserRole(null)                      
         setPendingCount(0)
       }
     } catch {
       setIsLoggedIn(false)
       setCurrentUserId(null)
-      setUserRole(null)                        // ← NEW
+      setUserRole(null)                        
     }
   }
 
@@ -105,11 +105,11 @@ export default function Header() {
 
   const navItems = ["Connect", "Services", "Committees", "Giving", "Chat"]
 
-  // ── Connect items are role-aware ─────────────────────────────────────────────
+  
   const menuData = {
     Connect: [
       "Alumni Directory",
-      ...(userRole === "alumni" || userRole === "admin" ? ["Student Directory"] : []),  // ← NEW
+      ...(userRole === "alumni" || userRole === "admin" ? ["Student Directory"] : []),  
       "My Network", "Connection Requests", "Alumnae Resources", "Featured Alumni",
       "Affinity Programs", "Professional Alliances", "Regional Networks",
       "Alumni Programs", "Volunteer Leadership", "Young Alumni", "Class Correspondence",
@@ -120,11 +120,11 @@ export default function Header() {
     Chat:       [],
   }
 
-  // ── "Student Directory" is now clickable ─────────────────────────────────────
+  
   const clickableItems = [
-    "Alumni Directory", "Student Directory",   // ← NEW
+    "Alumni Directory", "Student Directory",   
     "My Network", "Connection Requests", "Featured Alumni",
-    "Alumnae Resources", "Affinity Programs",
+    "Affinity Programs",
     "Executive Committee", "Advisory Committee",
   ]
 
@@ -140,7 +140,7 @@ export default function Header() {
     finally {
       setIsLoggedIn(false)
       setCurrentUserId(null)
-      setUserRole(null)                        // ← NEW
+      setUserRole(null)                      
       setPendingCount(0)
       window.dispatchEvent(new Event("authChange"))
       setOpen(false)
@@ -149,16 +149,17 @@ export default function Header() {
   }
 
   const getRoute = (link) => {
-    if (link === "Alumni Directory")    return "/alumni"
-    if (link === "Student Directory")   return "/students"   // ← NEW
-    if (link === "My Network")          return "/connections"
-    if (link === "Connection Requests") return "/connections/requests"
-    const slug = link.toLowerCase().replace(/\s+/g, "-")
-    if (["Featured Alumni", "Alumnae Resources", "Affinity Programs"].includes(link)) return `/connect/${slug}`
-    if (["Executive Committee", "Advisory Committee"].includes(link))                 return `/committee/${slug}`
-    return `/${slug}`
-  }
+  if (link === "Alumni Directory")    return "/alumni"
+  if (link === "Student Directory")   return "/students"
+  if (link === "My Network")          return "/connections"
+  if (link === "Connection Requests") return "/connections/requests"
+  const slug = link.toLowerCase().replace(/\s+/g, "-")
+  if (["Featured Alumni", "Alumnae Resources", "Affinity Programs"].includes(link)) return `/connect/${slug}`
+  if (["Executive Committee", "Advisory Committee"].includes(link)) return `/committee/${slug}`
 
+  
+  return "/"
+}
   const isLightMode = open || (hoverNav && active !== null)
 
   const UnreadBadge = ({ light = false }) => unreadTotal > 0 ? (
@@ -176,7 +177,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]">
 
-      {/* ── TOP UTILITY BAR ──────────────────────────────────── */}
+     
       <div className={`hidden md:block bg-white text-blue-600 text-[14px] transition-all duration-500 ease-in-out overflow-hidden ${scrolled ? "max-h-0 opacity-0" : "max-h-20 py-2 opacity-100"}`}>
         <div className="max-w-[1600px] mx-auto px-12 flex justify-end gap-6 font-bold uppercase tracking-widest items-center">
           {!isLoggedIn ? (
@@ -205,7 +206,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* ── MAIN NAV ─────────────────────────────────────────── */}
+      
       <nav
         onMouseEnter={() => { if (typeof window !== "undefined" && window.innerWidth >= 1024) setHoverNav(true) }}
         onMouseLeave={() => { setHoverNav(false); setActive(null) }}
@@ -213,7 +214,7 @@ export default function Header() {
       >
         <div className="max-w-[1600px] mx-auto px-4 md:px-12 flex justify-between items-center">
 
-          {/* LOGO */}
+          
           <Link href="/" className="flex items-center flex-1 justify-start cursor-pointer">
             <div className={`transition-all duration-500 relative flex-shrink-0 ${scrolled ? "w-16 h-16 md:w-24 md:h-24" : "w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40"}`}>
               <Image src="/images/IETLAA.svg" alt="logo" fill priority className={`object-contain transition-all duration-500 transform scale-125 ${!isLightMode ? "brightness-0 invert" : ""}`} />
@@ -224,7 +225,7 @@ export default function Header() {
             </div>
           </Link>
 
-          {/* DESKTOP NAV */}
+       
           <div className="flex items-center gap-4">
             <ul className="hidden lg:flex gap-6 xl:gap-8 transition-all duration-500 items-center">
               {navItems.map((item, i) => {
@@ -282,7 +283,6 @@ export default function Header() {
               })}
             </ul>
 
-            {/* MOBILE: icons + hamburger */}
             <div className="lg:hidden flex items-center gap-3">
               {isLoggedIn && (
                 <>
@@ -303,7 +303,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* ── MOBILE PANEL ───────────────────────────────────── */}
+       
         <div
           className={`lg:hidden fixed left-0 w-full transition-all duration-500 ease-in-out z-40 overflow-y-auto
             ${open ? "translate-y-0 opacity-100 visible" : "-translate-y-full opacity-0 invisible"}
@@ -375,7 +375,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* ── DESKTOP DROPDOWN ───────────────────────────────── */}
+        
         {active !== null && !open && navItems[active] !== "Chat" && menuData[navItems[active]]?.length > 0 && (
           <div className="absolute left-0 w-full bg-white text-black shadow-2xl border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="max-w-[1600px] mx-auto px-12 py-8">
