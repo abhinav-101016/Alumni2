@@ -10,14 +10,12 @@ import ChatWindow from "./ChatWindow";
 export default function ChatSidebar({ currentUserId }) {
   const { sidebarOpen, closeSidebar, activeRoom, closeRoom } = useChat();
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e) => { if (e.key === "Escape") closeSidebar(); };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [closeSidebar]);
 
-  // Lock body scroll when open
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -27,7 +25,7 @@ export default function ChatSidebar({ currentUserId }) {
     <AnimatePresence>
       {sidebarOpen && (
         <>
-          {/* ── Backdrop ─────────────────────────────────────── */}
+          {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
@@ -39,7 +37,7 @@ export default function ChatSidebar({ currentUserId }) {
             style={{ background: "rgba(15,23,42,0.45)", backdropFilter: "blur(4px)" }}
           />
 
-          {/* ── DESKTOP: Centered floating panel ─────────────── */}
+          {/* DESKTOP: Centered floating panel */}
           <div className="hidden lg:flex fixed inset-0 z-50 items-center justify-center pointer-events-none">
             <motion.div
               key="desktop-panel"
@@ -60,7 +58,7 @@ export default function ChatSidebar({ currentUserId }) {
                   ${activeRoom ? "w-[300px]" : "w-full"}`}
               >
                 <RoomListHeader onClose={closeSidebar} />
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto">
                   <RoomList />
                 </div>
               </div>
@@ -74,7 +72,7 @@ export default function ChatSidebar({ currentUserId }) {
             </motion.div>
           </div>
 
-          {/* ── MOBILE: Slide in from right, full screen ──────── */}
+          {/* MOBILE: Slide in from right, full screen */}
           <motion.div
             key="mobile-panel"
             initial={{ x: "100%" }}
@@ -83,11 +81,10 @@ export default function ChatSidebar({ currentUserId }) {
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className="lg:hidden fixed inset-0 z-50 bg-white flex flex-col overflow-hidden"
           >
-            {/* Mobile: room list or chat window */}
             {!activeRoom ? (
               <>
                 <RoomListHeader onClose={closeSidebar} />
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto">
                   <RoomList />
                 </div>
               </>
@@ -101,7 +98,6 @@ export default function ChatSidebar({ currentUserId }) {
   );
 }
 
-// Shared header for room list
 function RoomListHeader({ onClose }) {
   return (
     <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
