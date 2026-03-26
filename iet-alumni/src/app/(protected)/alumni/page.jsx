@@ -89,12 +89,14 @@ export default function AlumniDirectory() {
       );
       if (!res.ok) return;
       const data = await res.json();
+      console.log("RAW connections response:", data);
 
       // data.data is the array — each item has a `user` object with `_id`
       const ids = new Set(
         (data.data || []).map((item) => item.user?._id?.toString())
         .filter(Boolean)
       );
+      console.log("connectedIds Set:", ids);
       setConnectedIds(ids);
     } catch (e) {
       console.error("fetchConnections error:", e);

@@ -218,13 +218,15 @@ router.post("/login", loginLimiter, async (req, res) => {
     );
 
     // FIX: sameSite: "none" and secure: true are required for Vercel -> Render
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,      // Must be true for sameSite: "none"
-      sameSite: "none",  // Required for cross-site cookie usage
-      maxAge: 60 * 60 * 1000,
-      path: "/",         
-    });
+  const isProduction = process.env.NODE_ENV === "production";
+
+res.cookie("token", token, {
+  httpOnly: true,
+  secure: isProduction,           // false on localhost, true on Vercel
+  sameSite: isProduction ? "none" : "lax",  // lax for localhost
+  maxAge: 60 * 60 * 1000,
+  path: "/",
+});
 
     const safeUser = user.toObject();
     delete safeUser.auth;
