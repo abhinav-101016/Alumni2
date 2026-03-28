@@ -85,6 +85,36 @@ function VerificationBadges({ verification, accountStatus }) {
   );
 }
 
+/* ── ContactInfo ── */
+function ContactInfo({ email, phone, city, country }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm text-slate-600 mb-4">
+      <span className="flex items-center gap-1.5">
+        <Mail size={12} className="text-slate-400 flex-shrink-0" />
+        {email}
+      </span>
+      {phone && (
+        <>
+          <span className="text-slate-300 hidden sm:inline">·</span>
+          <span className="flex items-center gap-1.5">
+            <Phone size={12} className="text-slate-400 flex-shrink-0" />
+            {phone}
+          </span>
+        </>
+      )}
+      {city && (
+        <>
+          <span className="text-slate-300 hidden sm:inline">·</span>
+          <span className="flex items-center gap-1.5">
+            <MapPin size={12} className="text-slate-400 flex-shrink-0" />
+            {city}{country ? `, ${country}` : ""}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ── StatusBanners ── */
 function StatusBanners({ user }) {
   const { verification, accountStatus, isProfileComplete, role } = user;
@@ -256,16 +286,15 @@ function StudentDashboard({ data }) {
               <h1 className="text-2xl font-black text-slate-900">{user.name}</h1>
               <Pill pillStyle={{ background: "#f1f5f9", border: "1px solid #cbd5e1", color: "#475569" }}>Student</Pill>
             </div>
-            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-slate-600 mb-4">
-              <span className="flex items-center gap-1.5"><Mail size={12} />{user.email}</span>
-              <span className="flex items-center gap-1.5"><Phone size={12} />{user.phone}</span>
-              {user.profile?.location?.city && (
-                <span className="flex items-center gap-1.5">
-                  <MapPin size={12} />
-                  {user.profile.location.city}{user.profile.location.country ? `, ${user.profile.location.country}` : ""}
-                </span>
-              )}
-            </div>
+
+            {/* ── Fixed contact info spacing ── */}
+            <ContactInfo
+              email={user.email}
+              phone={user.phone}
+              city={user.profile?.location?.city}
+              country={user.profile?.location?.country}
+            />
+
             <VerificationBadges verification={user.verification} accountStatus={user.accountStatus} />
           </div>
 
@@ -350,16 +379,13 @@ function AlumniDashboard({ data }) {
               </p>
             )}
 
-            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-slate-600 mb-3">
-              <span className="flex items-center gap-1.5"><Mail size={12} />{user.email}</span>
-              <span className="flex items-center gap-1.5"><Phone size={12} />{user.phone}</span>
-              {user.profile?.location?.city && (
-                <span className="flex items-center gap-1.5">
-                  <MapPin size={12} />
-                  {user.profile.location.city}{user.profile.location.country ? `, ${user.profile.location.country}` : ""}
-                </span>
-              )}
-            </div>
+            {/* ── Fixed contact info spacing ── */}
+            <ContactInfo
+              email={user.email}
+              phone={user.phone}
+              city={user.profile?.location?.city}
+              country={user.profile?.location?.country}
+            />
 
             {user.profile?.bio && (
               <p className="text-slate-600 text-sm leading-relaxed mb-3 max-w-2xl">{user.profile.bio}</p>
@@ -524,7 +550,6 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
         <div className="text-center max-w-md">
           <AlertCircle size={36} className="text-red-500 mx-auto mb-3" />
-          {/* FIXED: was text-white on bg-slate-50 — completely invisible */}
           <p className="text-slate-900 font-bold text-lg mb-1">Something went wrong</p>
           <p className="text-slate-600 text-sm">{state.error}</p>
         </div>
@@ -541,4 +566,4 @@ export default function DashboardPage() {
       </div>
     </div>
   );
-} 
+}

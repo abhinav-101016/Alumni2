@@ -1,6 +1,7 @@
 import express from "express";
 import User from "../models/User.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import Connection from "../models/Connection.js";
 
 const router = express.Router();
 
@@ -71,9 +72,16 @@ router.get("/", authMiddleware, async (req, res) => {
     }
 
     // Placeholder connection counts — swap with real Connection model queries when ready
-    const connectionsCount        = 0;  // TODO: Connection.countDocuments({ userId, status: "accepted" })
-    const connectionRequestsCount = 0;  // TODO: Connection.countDocuments({ to: userId, status: "pending" })
-
+    const [connectionsCount, connectionRequestsCount] = await Promise.all([
+  Connection.countDocuments({
+    $or: [{ from: userId }, { to: userId }],
+    status: "accepted",
+  }),
+  Connection.countDocuments({
+    to: userId,
+    status: "pending",
+  }),
+]);
     return res.json({
       success: true,
       role,

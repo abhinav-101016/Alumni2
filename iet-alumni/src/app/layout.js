@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ChatProvider } from "@/context/ChatContext";
+import ChatSidebar from "@/components/chat/ChatSidebar";
 
 const inter = Inter({ subsets: ["latin"] });
 const playfair = Playfair_Display({ 
@@ -15,6 +16,7 @@ const playfair = Playfair_Display({
 export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
   const isLoggedIn = cookieStore.has("token"); 
+  const userId = cookieStore.get("userId")?.value || null; 
 
   return (
     <html lang="en">
@@ -23,6 +25,8 @@ export default async function RootLayout({ children }) {
           <Header />
           {children}
           <Footer />
+          <ScrollToTop />
+          {isLoggedIn && <ChatSidebar currentUserId={userId} />}
         </ChatProvider>
       </body>
     </html>
