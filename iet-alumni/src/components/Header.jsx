@@ -7,7 +7,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   Menu, X, ChevronDown, ArrowRight, Gift, Search,
-  Plus, Minus, User, Bell, MessageCircle, LogOut
+  Plus, Minus, User, Bell, MessageCircle, LogOut, ShieldCheck
 } from "lucide-react"
 import "@fontsource/playfair-display/700.css"
 import { ChatContext } from "@/context/ChatContext"
@@ -103,9 +103,13 @@ export default function Header() {
     return () => clearInterval(interval)
   }, [isLoggedIn])
 
-  const navItems = ["Connect", "Services", "Committees", "Giving", "Chat"]
+  const isAdmin = userRole === "admin"
 
-  
+  // Admin sees "Verify Users" instead of "Giving"
+  const navItems = isAdmin
+    ? ["Connect", "Services", "Committees", "Verify Users", "Chat"]
+    : ["Connect", "Services", "Committees", "Giving", "Chat"]
+
   const menuData = {
     Connect: [
       "Alumni Directory",
@@ -114,13 +118,13 @@ export default function Header() {
       "Affinity Programs", "Professional Alliances", "Regional Networks",
       "Alumni Programs", "Volunteer Leadership", "Young Alumni", "Class Correspondence",
     ],
-    Services:   ["Alumni Extras", "Order a Transcript", "Vistex Online Courses", "Epitome Yearbook"],
-    Committees: ["Executive Committee", "Advisory Committee"],
-    Giving:     ["IET Lucknow Fund", "Parents' Council", "Recognition Societies", "Planned Giving", "Matching Gift", "Partnerships", "Giving Day + March Mania"],
-    Chat:       [],
+    Services:      ["Alumni Extras", "Order a Transcript", "Vistex Online Courses", "Epitome Yearbook"],
+    Committees:    ["Executive Committee", "Advisory Committee"],
+    Giving:        ["IET Lucknow Fund", "Parents' Council", "Recognition Societies", "Planned Giving", "Matching Gift", "Partnerships", "Giving Day + March Mania"],
+    "Verify Users": [], // handled as a direct link, no dropdown needed
+    Chat:          [],
   }
 
-  
   const clickableItems = [
     "Alumni Directory", "Student Directory",   
     "My Network", "Connection Requests", "Featured Alumni",
@@ -149,17 +153,16 @@ export default function Header() {
   }
 
   const getRoute = (link) => {
-  if (link === "Alumni Directory")    return "/alumni"
-  if (link === "Student Directory")   return "/students"
-  if (link === "My Network")          return "/connections"
-  if (link === "Connection Requests") return "/connections/requests"
-  const slug = link.toLowerCase().replace(/\s+/g, "-")
-  if (["Featured Alumni", "Alumnae Resources", "Affinity Programs"].includes(link)) return `/connect/${slug}`
-  if (["Executive Committee", "Advisory Committee"].includes(link)) return `/committee/${slug}`
+    if (link === "Alumni Directory")    return "/alumni"
+    if (link === "Student Directory")   return "/students"
+    if (link === "My Network")          return "/connections"
+    if (link === "Connection Requests") return "/connections/requests"
+    const slug = link.toLowerCase().replace(/\s+/g, "-")
+    if (["Featured Alumni", "Alumnae Resources", "Affinity Programs"].includes(link)) return `/connect/${slug}`
+    if (["Executive Committee", "Advisory Committee"].includes(link)) return `/committee/${slug}`
+    return "/"
+  }
 
-  
-  return "/"
-}
   const isLightMode = open || (hoverNav && active !== null)
 
   const UnreadBadge = ({ light = false }) => unreadTotal > 0 ? (
@@ -177,13 +180,21 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]">
 
-     
       <div className={`hidden md:block bg-white text-blue-600 text-[14px] transition-all duration-500 ease-in-out overflow-hidden ${scrolled ? "max-h-0 opacity-0" : "max-h-20 py-2 opacity-100"}`}>
         <div className="max-w-[1600px] mx-auto px-12 flex justify-end gap-6 font-bold uppercase tracking-widest items-center">
           {!isLoggedIn ? (
             <button onClick={handleLoginClick} className="hover:text-blue-900 transition-colors cursor-pointer text-[12px]">LOGIN</button>
           ) : (
             <div className="flex items-center gap-5">
+              {/* Admin shortcut in top bar */}
+              {isAdmin && (
+                <Link
+                  href="/admin/verify-users"
+                  className="flex items-center gap-1.5 hover:text-[#951114] transition-colors cursor-pointer text-[12px] text-[#951114] font-black"
+                >
+                  <ShieldCheck size={14} /> VERIFY USERS
+                </Link>
+              )}
               <button onClick={handleOpenChat} className="relative hover:text-blue-900 transition-colors cursor-pointer" title="Messages">
                 <MessageCircle size={18} />
                 <UnreadBadge />
@@ -200,13 +211,14 @@ export default function Header() {
               </button>
             </div>
           )}
-          <button className="flex gap-1 items-center hover:text-blue-900 transition-colors text-[12px]"><Gift size={14} /> MAKE A GIFT</button>
+          {!isAdmin && (
+            <button className="flex gap-1 items-center hover:text-blue-900 transition-colors text-[12px]"><Gift size={14} /> MAKE A GIFT</button>
+          )}
           <button className="hover:text-blue-900 transition-colors text-[12px]">CONTACT US</button>
           <Search size={16} className="cursor-pointer hover:text-blue-900" />
         </div>
       </div>
 
-      
       <nav
         onMouseEnter={() => { if (typeof window !== "undefined" && window.innerWidth >= 1024) setHoverNav(true) }}
         onMouseLeave={() => { setHoverNav(false); setActive(null) }}
@@ -214,7 +226,6 @@ export default function Header() {
       >
         <div className="max-w-[1600px] mx-auto px-4 md:px-12 flex justify-between items-center">
 
-          
           <Link href="/" className="flex items-center flex-1 justify-start cursor-pointer">
             <div className={`transition-all duration-500 relative flex-shrink-0 ${scrolled ? "w-16 h-16 md:w-24 md:h-24" : "w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40"}`}>
               <Image src="/images/IETLAA.svg" alt="logo" fill priority className={`object-contain transition-all duration-500 transform scale-125 ${!isLightMode ? "brightness-0 invert" : ""}`} />
@@ -225,7 +236,6 @@ export default function Header() {
             </div>
           </Link>
 
-       
           <div className="flex items-center gap-4">
             <ul className="hidden lg:flex gap-6 xl:gap-8 transition-all duration-500 items-center">
               {navItems.map((item, i) => {
@@ -272,6 +282,21 @@ export default function Header() {
                   )
                 }
 
+                // ── Verify Users: direct link, no dropdown ──
+                if (item === "Verify Users") {
+                  return (
+                    <li key={i}>
+                      <Link
+                        href="/admin/verify-users"
+                        className={`flex items-center gap-1.5 font-black uppercase tracking-wide transition-all duration-300 ${scrolled ? "text-sm" : "text-base"} ${isLightMode ? "text-[#951114] hover:text-blue-700" : "text-white hover:text-yellow-300"}`}
+                      >
+                        <ShieldCheck size={scrolled ? 14 : 18} />
+                        Verify Users
+                      </Link>
+                    </li>
+                  )
+                }
+
                 return (
                   <li key={i} onMouseEnter={() => setActive(i)}
                     className={`cursor-pointer flex items-center gap-1 transition-all duration-300 font-bold uppercase tracking-wide ${scrolled ? "text-sm" : "text-base"} ${active === i ? "text-blue-700" : isLightMode ? "hover:text-blue-700" : "hover:text-gray-300"}`}
@@ -303,7 +328,7 @@ export default function Header() {
           </div>
         </div>
 
-       
+        {/* ── Mobile Menu ── */}
         <div
           className={`lg:hidden fixed left-0 w-full transition-all duration-500 ease-in-out z-40 overflow-y-auto
             ${open ? "translate-y-0 opacity-100 visible" : "-translate-y-full opacity-0 invisible"}
@@ -332,6 +357,16 @@ export default function Header() {
                       </span>
                     )}
                   </button>
+                  {/* Admin mobile shortcut */}
+                  {isAdmin && (
+                    <Link
+                      href="/admin/verify-users"
+                      onClick={() => setOpen(false)}
+                      className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold uppercase tracking-widest transition-all mb-3 ${isLightMode ? "bg-[#951114]/10 text-[#951114]" : "bg-white/10 text-white"}`}
+                    >
+                      <ShieldCheck size={20} /> Verify Users
+                    </Link>
+                  )}
                   <button onClick={handleLogout} className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold uppercase tracking-widest transition-all ${isLightMode ? "bg-gray-100 text-black" : "bg-white/10 text-white"}`}>
                     <LogOut size={20} /> Logout
                   </button>
@@ -339,7 +374,7 @@ export default function Header() {
               )}
             </div>
 
-            {navItems.filter(item => item !== "Chat").map((item, i) => (
+            {navItems.filter(item => item !== "Chat" && item !== "Verify Users").map((item, i) => (
               <div key={i} className={`border-b ${isLightMode ? "border-gray-100" : "border-white/10"}`}>
                 <button onClick={() => setMobileOpen(mobileOpen === i ? null : i)} className="w-full flex justify-between items-center py-4 text-base font-bold uppercase">
                   <span className="flex items-center gap-2">
@@ -375,8 +410,8 @@ export default function Header() {
           </div>
         </div>
 
-        
-        {active !== null && !open && navItems[active] !== "Chat" && menuData[navItems[active]]?.length > 0 && (
+        {/* ── Desktop Dropdown ── */}
+        {active !== null && !open && navItems[active] !== "Chat" && navItems[active] !== "Verify Users" && menuData[navItems[active]]?.length > 0 && (
           <div className="absolute left-0 w-full bg-white text-black shadow-2xl border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="max-w-[1600px] mx-auto px-12 py-8">
               <div className="mb-4 flex items-center gap-3 w-fit">

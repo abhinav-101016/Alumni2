@@ -6,7 +6,7 @@ import { authorizeRoles } from "../middleware/authorizeRoles.js";
 const router = express.Router();
 
 // ── Accessible to all logged-in & admin-verified users ───────────────────────
-router.get("/directory", authMiddleware, getAlumniDirectory);
+router.get("/directory", authMiddleware,getAlumniDirectory);
 
 // ── Accessible only to alumni and admin ──────────────────────────────────────
 router.get("/students", authMiddleware, authorizeRoles("alumni", "admin"), getStudentDirectory);

@@ -6,10 +6,12 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth.js";
+import adminRoutes from "./routes/adminRoutes.js"
 import profileRoutes from "./routes/profile.js";
 import alumniRoutes from "./routes/alumniRoutes.js";
 import connectionRoutes from "./routes/connectionRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import dashboardRouter from "./routes/dashboardRoutes.js";
 
 import { initSocket } from "./socket/socketInit.js";
 import redis from "./utils/redis.js";
@@ -22,7 +24,7 @@ const app = express();
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST","PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
@@ -43,6 +45,8 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/alumni", alumniRoutes);
 app.use("/api/connections", connectionRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/dashboard",dashboardRouter)
 
 // Health check — also verifies Redis is alive
 app.get("/health", async (req, res) => {

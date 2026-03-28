@@ -1,5 +1,6 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
+import { authorizeRoles } from "../middleware/authorizeRoles.js";
 import {
   getMyRooms,
   getOrCreateDmRoom,
@@ -15,7 +16,7 @@ import {
 const router = express.Router();
 
 // All chat routes require authentication — your existing JWT middleware
-router.use(authMiddleware);
+router.use(authMiddleware,authorizeRoles("alumni", "student"));
 
 // ── Room routes ───────────────────────────────────────────────────
 router.get("/rooms",                    getMyRooms);           // My rooms (DM + community)

@@ -1,5 +1,6 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
+import { authorizeRoles } from "../middleware/authorizeRoles.js";
 import {
   sendConnectionRequest,
   acceptConnectionRequest,
@@ -15,7 +16,7 @@ import {
 const router = express.Router();
 
 // All routes require authentication
-router.use(authMiddleware);
+router.use(authMiddleware,authorizeRoles("alumni", "student"));
 
 // ── Send / Cancel ──────────────────────────────
 router.post("/send/:receiverId", sendConnectionRequest);

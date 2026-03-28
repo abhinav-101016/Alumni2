@@ -85,7 +85,7 @@ router.post(
         verification: {
           isEmailVerified: false,
           isPhoneVerified: false,
-          isVerifiedByAdmin: true
+          isVerifiedByAdmin: false
         },
         accountStatus: "pending",
         profile: {
@@ -142,7 +142,7 @@ router.post("/verify-email", async (req, res) => {
     }
 
     user.verification.isEmailVerified = true;
-    user.accountStatus = "active";
+    user.accountStatus = "pending";
     user.auth.emailVerification = undefined;
 
     await user.save();
