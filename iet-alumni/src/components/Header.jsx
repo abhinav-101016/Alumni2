@@ -376,7 +376,7 @@ export default function Header() {
                       </span>
                     )}
                   </button>
-                  {/* Admin mobile shortcut */}
+                 
                   {isAdmin && (
                     <Link
                       href="/admin/verify-users"
