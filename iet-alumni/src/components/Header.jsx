@@ -232,7 +232,7 @@ export default function Header() {
             </div>
             <div style={{ fontFamily: "Playfair Display" }} className={`leading-tight transition-all duration-500 flex flex-col justify-center ${isLightMode ? "text-[#951114]" : "text-white"}`}>
               <div className={`font-bold transition-all duration-500 whitespace-nowrap ${scrolled ? "text-base md:text-xl" : "text-lg md:text-3xl"}`}>IET LUCKNOW</div>
-              <div className={`font-medium transition-all duration-500 ${scrolled ? "text-[10px] md:text-xs" : "text-xs md:text-xl"}`}>Alumni</div>
+              <div className={`font-medium transition-all duration-500 ${scrolled ? "text-[10px] md:text-xs" : "text-xs md:text-xl"}`}>Alumni Association</div>
             </div>
           </Link>
 
