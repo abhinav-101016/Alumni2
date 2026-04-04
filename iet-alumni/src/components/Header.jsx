@@ -27,6 +27,10 @@ function openChat(openSidebar) {
     openSidebar()
   } else {
     window.dispatchEvent(new CustomEvent("openChatSidebar"))
+    // fallback: if no sidebar responds within a tick, navigate directly
+    setTimeout(() => {
+      window.location.href = "/messages"
+    }, 100)
   }
 }
 
@@ -91,12 +95,27 @@ export default function Header() {
     return () => window.removeEventListener("authChange", checkAuth)
   }, [])
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50)
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+ useEffect(() => {
+  let ticking = false
 
+  const handleScroll = () => {
+    if (ticking) return
+    ticking = true
+
+    requestAnimationFrame(() => {
+      const y = window.scrollY
+      setScrolled(prev => {
+        if (!prev && y > 60) return true
+        if (prev  && y < 30) return false
+        return prev
+      })
+      ticking = false
+    })
+  }
+
+  window.addEventListener("scroll", handleScroll, { passive: true })
+  return () => window.removeEventListener("scroll", handleScroll)
+}, [])
   useEffect(() => {
     if (!isLoggedIn) return
     const interval = setInterval(fetchPendingCount, 60000)

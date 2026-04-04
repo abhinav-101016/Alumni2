@@ -14,19 +14,15 @@ const playfair = Playfair_Display({
 });
 
 export default async function RootLayout({ children }) {
-  const cookieStore = await cookies();
-  const isLoggedIn = cookieStore.has("token"); 
-  const userId = cookieStore.get("userId")?.value || null; 
-
   return (
     <html lang="en">
       <body className={`${inter.className} ${playfair.variable}`}>
-        <ChatProvider isLoggedIn={isLoggedIn}>
+        <ChatProvider>
           <Header />
           {children}
           <Footer />
           <ScrollToTop />
-          {isLoggedIn && <ChatSidebar currentUserId={userId} />}
+          <ChatSidebar />
         </ChatProvider>
       </body>
     </html>

@@ -477,10 +477,10 @@ function AlumniDashboard({ data }) {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {skills.map((sk, i) => (
-                  <span key={i}
-                    className="px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold">
-                    {sk}
-                  </span>
+                 <span key={i}
+  className="px-3 py-1.5 rounded-xl bg-[#951114] text-white text-xs font-bold">
+  {sk}
+</span>
                 ))}
               </div>
             )}
