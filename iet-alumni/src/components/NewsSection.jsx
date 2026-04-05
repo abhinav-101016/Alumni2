@@ -27,7 +27,7 @@ const newsItems = [
 
 const NewsSection = () => {
   return (
-    <section className="relative overflow-hidden bg-white">
+    <section id="news" className="relative overflow-hidden bg-white">
       {/* BACKGROUND SPLIT - Mimicking the sidebar aesthetic in your screenshots */}
       <div className="absolute inset-0 flex">
         <div className="w-1/3 h-full bg-[#f1f5f9] opacity-70"></div>

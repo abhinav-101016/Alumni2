@@ -1,5 +1,5 @@
 // controllers/alumniController.js
-import User from "../models/User.js";
+/*import User from "../models/User.js";
 
 // ─── Shared helper to build directory query ───────────────────────────────────
 const buildDirectoryQuery = (role, queryParams) => {
@@ -80,3 +80,4 @@ export const getStudentDirectory = async (req, res) => {
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
+*/

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function Login() {
+export default function AdminLogin() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -29,7 +29,7 @@ export default function Login() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`,
         {
           method: "POST",
-          credentials:"include",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
@@ -39,17 +39,13 @@ export default function Login() {
 
       const data = await res.json();
 
-   if (res.ok) {
-
-  window.dispatchEvent(new Event("authChange"))
-
-  setMessage("You are Logged in")
-
-  setTimeout(()=>{
-    router.push("/")
-  },1500)
-
-} else {
+      if (res.ok) {
+        window.dispatchEvent(new Event("authChange"));
+        setMessage("You are Logged in");
+        setTimeout(() => {
+          router.push("/");
+        }, 1500);
+      } else {
         setMessage(data.message || "Invalid credentials");
       }
     } catch (error) {
@@ -62,15 +58,15 @@ export default function Login() {
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
       <div className="w-full lg:w-1/2 max-w-2xl bg-white border border-slate-200 shadow-sm overflow-hidden rounded-sm">
-        
+
         {/* Header */}
         <div className="pt-12 pb-8 text-center border-b border-slate-100">
           <div className="w-10 h-1 bg-[#951114] mx-auto mb-4" />
           <h2 className="text-3xl font-black text-black uppercase tracking-tighter">
-            Member Login
+            Admin Login
           </h2>
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
-            Access the IET Alumni Portal
+            Restricted Access • IET Alumni Portal
           </p>
         </div>
 
@@ -79,7 +75,7 @@ export default function Login() {
           className="p-8 md:p-14 space-y-8 flex flex-col items-center"
         >
           <div className="w-full max-w-md space-y-6">
-            
+
             {/* Email/Phone */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-black ml-1">
@@ -111,7 +107,10 @@ export default function Login() {
                 className="w-full px-4 py-3 bg-white border border-slate-300 focus:border-[#951114] outline-none text-xs text-black font-medium placeholder:text-slate-400 transition-all"
               />
               <div className="text-right">
-                  <Link href="/forgot-password" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-[#951114] transition-colors">
+                <Link
+                  href="/forgot-password"
+                  className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-[#951114] transition-colors"
+                >
                   Forgot Password?
                 </Link>
               </div>
@@ -125,13 +124,13 @@ export default function Login() {
               disabled={loading}
               className="rounded-sm max-w-[240px] py-4 px-6 bg-[#951114] text-white text-[11px] font-black uppercase hover:bg-black transition-all duration-300 active:scale-95 shadow-md disabled:opacity-50"
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? "Signing In..." : "Sign In as Admin"}
             </button>
 
             {message && (
               <p
                 className={`text-xs font-bold ${
-                  message.includes("Welcome")
+                  message.includes("Welcome") || message.includes("Logged")
                     ? "text-green-600"
                     : "text-red-600"
                 }`}
@@ -139,18 +138,6 @@ export default function Login() {
                 {message}
               </p>
             )}
-
-            <div className="text-center border-t border-slate-100 w-full pt-8">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                New to the network?
-              </p>
-              <Link
-                href="/signup"
-                className="block mt-1 text-black font-black text-[11px] uppercase tracking-widest hover:text-[#951114] transition-all underline underline-offset-4 decoration-2"
-              >
-                Create Account
-              </Link>
-            </div>
           </div>
         </form>
       </div>

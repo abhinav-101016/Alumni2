@@ -1,4 +1,4 @@
-"use client";
+{/*"use client";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -162,7 +162,7 @@ export default function SignUp() {
     <main className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
       <div className="w-full lg:w-1/2 bg-white border border-slate-200 shadow-sm overflow-hidden rounded-sm">
 
-        {/* Header */}
+        {/* Header 
         <div className="pt-10 pb-6 text-center border-b border-slate-100">
           <div className="w-10 h-1 bg-[#951114] mx-auto mb-4" />
           <h2 className="text-3xl font-black text-black uppercase tracking-tighter">
@@ -175,7 +175,7 @@ export default function SignUp() {
 
         <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10">
 
-          {/* PERSONAL INFO */}
+          
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 01. Personal Info
@@ -191,7 +191,6 @@ export default function SignUp() {
               <InputField label="Blood Group" name="bloodGroup" options={ENUMS.bloodGroups} value={formData.bloodGroup}  onChange={handleChange} />
             </div>
 
-            {/* PRIVACY OPTIONS */}
             <div className="mt-4 px-2 space-y-2">
               <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-600">
                 <input type="checkbox" name="showEmail" checked={formData.showEmail} onChange={handleChange} className="accent-[#951114]" />
@@ -204,7 +203,7 @@ export default function SignUp() {
             </div>
           </section>
 
-          {/* ACADEMIC RECORD */}
+          
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 02. Academic Record
@@ -219,7 +218,7 @@ export default function SignUp() {
             </div>
           </section>
 
-          {/* SUBMIT */}
+       
           <div className="pt-8 flex flex-col items-center border-t border-slate-100">
             <button
               type="submit"
@@ -254,3 +253,4 @@ export default function SignUp() {
     </main>
   );
 }
+  */}

@@ -1,4 +1,4 @@
-"use client";
+{/*"use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
@@ -182,7 +182,7 @@ export default function CompleteProfile() {
 
         <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10">
           
-          {/* Section 00: Profile Picture */}
+         
           <section className="flex flex-col items-center border-b border-slate-100 pb-10">
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 w-full px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 00. Profile Identity
@@ -219,7 +219,7 @@ export default function CompleteProfile() {
             </div>
           </section>
 
-          {/* Section 01: Bio */}
+         
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 01. Professional Summary
@@ -236,7 +236,6 @@ export default function CompleteProfile() {
             </div>
           </section>
 
-          {/* Section 02: Work Experience */}
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 02. Work Experience
@@ -261,7 +260,7 @@ export default function CompleteProfile() {
             <button type="button" onClick={addExperience} className="text-[10px] font-bold uppercase tracking-widest text-[#951114] ml-2 hover:underline">+ Add Another Experience</button>
           </section>
 
-          {/* Section 03: Links & Skills */}
+          
           <section>
             <p className="text-[10px] font-black text-[#951114] uppercase tracking-[0.4em] mb-6 px-2 flex items-center gap-3">
               <span className="w-4 h-px bg-[#951114]"></span> 03. Skills & Links
@@ -297,3 +296,4 @@ export default function CompleteProfile() {
     </main>
   );
 }
+  */}

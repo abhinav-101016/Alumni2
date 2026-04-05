@@ -30,7 +30,7 @@ const loginLimiter = rateLimit({
 /* =====================================================
    REGISTER
 ===================================================== */
-router.post(
+/*router.post(
   "/register",
    [
     body("name").isLength({ min: 2 }).withMessage("Name must be at least 2 characters"),
@@ -158,7 +158,7 @@ router.post("/verify-email", async (req, res) => {
 
 /* =====================================================
    RESEND OTP
-===================================================== */
+===================================================== 
 router.post("/resend-otp", async (req, res) => {
   try {
     const { email } = req.body;
@@ -181,6 +181,8 @@ router.post("/resend-otp", async (req, res) => {
   }
 });
 
+
+*/
 /* =====================================================
    LOGIN (PRODUCTION FIX)
 ===================================================== */

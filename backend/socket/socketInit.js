@@ -1,4 +1,4 @@
-import { Server } from "socket.io";
+/*import { Server } from "socket.io";
 import socketAuthMiddleware from "../middleware/socketAuthMiddleware.js";
 import registerSocketHandlers from "./socketHandlers.js";
 
@@ -34,3 +34,5 @@ export function getIO() {
   if (!io) throw new Error("Socket.IO not initialized. Call initSocket() first.");
   return io;
 }
+
+*/

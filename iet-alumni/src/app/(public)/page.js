@@ -5,18 +5,23 @@ import EngagementSection from '@/components/EngagementSection';
 import FeatureBanner from '@/components/FeatureBanner';
 import AlumniEvents from '@/components/AlumniEvents';
 import NewsSection from '@/components/NewsSection';
+import BlogsSection from '@/components/BlogsSection';
+import RegisterCTA from '@/components/RegisterCTA';
 
 export default function Home() {
   return (
     <main>
       
       <Hero />
-      <Campaign/>
-      <BulletinCarousel/>
+      {/*<Campaign/>
+      {/*<BulletinCarousel/>
       <EngagementSection/>
-      <FeatureBanner/>
+      <FeatureBanner/>*/}
       <AlumniEvents/>
+      <BlogsSection/>
+     
       <NewsSection/>
+       <RegisterCTA/>
       {/* Other sections like News or Events can go here */}
     </main>
   );

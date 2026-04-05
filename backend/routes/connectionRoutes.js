@@ -1,7 +1,7 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/authorizeRoles.js";
-import {
+/*import {
   sendConnectionRequest,
   acceptConnectionRequest,
   rejectConnectionRequest,
@@ -36,3 +36,4 @@ router.get("/requests/sent", getSentRequests);            // pending requests I 
 router.get("/status/:userId", getConnectionStatus);       // status with a specific user
 
 export default router;
+*/

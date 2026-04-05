@@ -1,4 +1,4 @@
-import Room from "../models/Room.js";
+/*import Room from "../models/Room.js";
 import Message from "../models/Message.js";
 import redis from "../utils/redis.js";
 import mongoose from "mongoose";
@@ -321,3 +321,4 @@ export default function registerSocketHandlers(io, socket) {
     }
   });
 }
+  */

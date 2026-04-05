@@ -1,4 +1,4 @@
-import express from "express";
+/*import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/authorizeRoles.js";
 import {
@@ -34,3 +34,4 @@ router.put("/rooms/:roomId/messages/read",  markRoomAsRead);  // Mark as read
 router.get("/unread-count", getUnreadCount);                  // Nav badge count
 
 export default router;
+*/

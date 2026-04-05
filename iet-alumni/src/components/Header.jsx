@@ -27,7 +27,6 @@ function openChat(openSidebar) {
     openSidebar()
   } else {
     window.dispatchEvent(new CustomEvent("openChatSidebar"))
-    // fallback: if no sidebar responds within a tick, navigate directly
     setTimeout(() => {
       window.location.href = "/messages"
     }, 100)
@@ -95,27 +94,25 @@ export default function Header() {
     return () => window.removeEventListener("authChange", checkAuth)
   }, [])
 
- useEffect(() => {
-  let ticking = false
-
-  const handleScroll = () => {
-    if (ticking) return
-    ticking = true
-
-    requestAnimationFrame(() => {
-      const y = window.scrollY
-      setScrolled(prev => {
-        if (!prev && y > 60) return true
-        if (prev  && y < 30) return false
-        return prev
+  useEffect(() => {
+    let ticking = false
+    const handleScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const y = window.scrollY
+        setScrolled(prev => {
+          if (!prev && y > 60) return true
+          if (prev  && y < 30) return false
+          return prev
+        })
+        ticking = false
       })
-      ticking = false
-    })
-  }
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
-  window.addEventListener("scroll", handleScroll, { passive: true })
-  return () => window.removeEventListener("scroll", handleScroll)
-}, [])
   useEffect(() => {
     if (!isLoggedIn) return
     const interval = setInterval(fetchPendingCount, 60000)
@@ -124,32 +121,82 @@ export default function Header() {
 
   const isAdmin = userRole === "admin"
 
-  // Admin sees "Verify Users" instead of "Giving"
-  const navItems = isAdmin
-    ? ["Connect", "Services", "Committees", "Verify Users", "Chat"]
-    : ["Connect", "Services", "Committees", "Giving", "Chat"]
-
-  const menuData = {
-    Connect: [
-      "Alumni Directory",
-      ...(userRole === "alumni" || userRole === "admin" ? ["Student Directory"] : []),  
-      "My Network", "Connection Requests", "Alumnae Resources", "Featured Alumni",
-      "Affinity Programs", "Professional Alliances", "Regional Networks",
-      "Alumni Programs", "Volunteer Leadership", "Young Alumni", "Class Correspondence",
-    ],
-    Services:      ["Alumni Extras", "Order a Transcript", "Vistex Online Courses", "Epitome Yearbook"],
-    Committees:    ["Executive Committee", "Advisory Committee"],
-    Giving:        ["IET Lucknow Fund", "Parents' Council", "Recognition Societies", "Planned Giving", "Matching Gift", "Partnerships", "Giving Day + March Mania"],
-    "Verify Users": [], // handled as a direct link, no dropdown needed
-    Chat:          [],
+  // ── Scroll to a section on the home page ──
+  const scrollToSection = (sectionId) => {
+    setOpen(false)
+    setActive(null)
+    if (window.location.pathname !== "/") {
+      router.push(`/#${sectionId}`)
+    } else {
+      const el = document.getElementById(sectionId)
+      if (el) el.scrollIntoView({ behavior: "smooth" })
+    }
   }
 
-  const clickableItems = [
-    "Alumni Directory", "Student Directory",   
-    "My Network", "Connection Requests", "Featured Alumni",
-    "Affinity Programs",
-    "Executive Committee", "Advisory Committee",
-  ]
+  // ── Nav items ──
+  // "Committees" added so Executive/Advisory Committee links are visible to all users
+  const newNavItems = isAdmin
+    ? ["Committees", "Events", "Blogs", "News", "Verify Users", "Chat"]
+    : ["Committees", "Events", "Blogs", "News", "Chat"]
+
+  // ── COMMENTED OUT: old nav items ──
+  // const navItems = isAdmin
+  //   ? ["Connect", "Services", "Committees", "Verify Users", "Chat"]
+  //   : ["Connect", "Services", "Committees", "Giving", "Chat"]
+
+  // ── Dropdown data ──
+  // Committees → direct route links (Executive & Advisory)
+  // Events     → Featured Alumni (route) + Upcoming Events (scroll #events)
+  // Blogs      → scroll to #blogs
+  // News       → scroll to #news
+  const menuData = {
+    Committees: ["Executive Committee", "Advisory Committee"],
+    Events:     ["Featured Alumni", "Upcoming Events"],
+    Blogs:      ["Latest Posts", "Alumni Stories"],
+    News:       ["Announcements", "Press Coverage"],
+    "Verify Users": [],
+    Chat: [],
+  }
+
+  // ── COMMENTED OUT: old menu data ──
+  // const oldMenuData = {
+  //   Connect: [
+  //     "Alumni Directory",
+  //     ...(userRole === "alumni" || userRole === "admin" ? ["Student Directory"] : []),
+  //     "My Network", "Connection Requests", "Alumnae Resources", "Featured Alumni",
+  //     "Affinity Programs", "Professional Alliances", "Regional Networks",
+  //     "Alumni Programs", "Volunteer Leadership", "Young Alumni", "Class Correspondence",
+  //   ],
+  //   Services:      ["Alumni Extras", "Order a Transcript", "Vistex Online Courses", "Epitome Yearbook"],
+  //   Committees:    ["Executive Committee", "Advisory Committee"],
+  //   Giving:        ["IET Lucknow Fund", "Parents' Council", "Recognition Societies", "Planned Giving", "Matching Gift", "Partnerships", "Giving Day + March Mania"],
+  // }
+
+  // ── Items that navigate to a dedicated route (not scroll) ──
+  const clickableItems = ["Featured Alumni", "Executive Committee", "Advisory Committee"]
+
+  // ── COMMENTED OUT: old clickable items ──
+  // const oldClickableItems = [
+  //   "Alumni Directory", "Student Directory",
+  //   "My Network", "Connection Requests", "Featured Alumni",
+  //   "Affinity Programs",
+  //   "Executive Committee", "Advisory Committee",
+  // ]
+
+  // ── Section scroll map ──
+  // "events" → <section id="events"> — AlumniEvents component
+  // "news"   → <section id="news">   — NewsSection component
+  // "blogs"  → <section id="blogs">  — BlogsSection component
+  const sectionMap = {
+    Events:            "events",
+    Blogs:             "blogs",
+    News:              "news",
+    "Upcoming Events": "events",
+    "Latest Posts":    "blogs",
+    "Alumni Stories":  "blogs",
+    "Announcements":   "news",
+    "Press Coverage":  "news",
+  }
 
   const handleProfileClick = () => { router.push("/dashboard"); setOpen(false) }
   const handleLoginClick   = () => { router.push("/login");     setOpen(false) }
@@ -172,15 +219,23 @@ export default function Header() {
   }
 
   const getRoute = (link) => {
-    if (link === "Alumni Directory")    return "/alumni"
-    if (link === "Student Directory")   return "/students"
-    if (link === "My Network")          return "/connections"
-    if (link === "Connection Requests") return "/connections/requests"
-    const slug = link.toLowerCase().replace(/\s+/g, "-")
-    if (["Featured Alumni", "Alumnae Resources", "Affinity Programs"].includes(link)) return `/connect/${slug}`
-    if (["Executive Committee", "Advisory Committee"].includes(link)) return `/committee/${slug}`
+    if (link === "Featured Alumni")     return "/connect/featured-alumni"
+    if (link === "Executive Committee") return "/(public)/committee/executive-committee"
+    if (link === "Advisory Committee")  return "/(public)/committee/advisory-committee"
     return "/"
   }
+
+  // ── COMMENTED OUT: old full getRoute ──
+  // const getRoute = (link) => {
+  //   if (link === "Alumni Directory")    return "/alumni"
+  //   if (link === "Student Directory")   return "/students"
+  //   if (link === "My Network")          return "/connections"
+  //   if (link === "Connection Requests") return "/connections/requests"
+  //   const slug = link.toLowerCase().replace(/\s+/g, "-")
+  //   if (["Featured Alumni", "Alumnae Resources", "Affinity Programs"].includes(link)) return `/connect/${slug}`
+  //   if (["Executive Committee", "Advisory Committee"].includes(link)) return `/committee/${slug}`
+  //   return "/"
+  // }
 
   const isLightMode = open || (hoverNav && active !== null)
 
@@ -205,7 +260,6 @@ export default function Header() {
             <button onClick={handleLoginClick} className="hover:text-blue-900 transition-colors cursor-pointer text-[12px]">LOGIN</button>
           ) : (
             <div className="flex items-center gap-5">
-              {/* Admin shortcut in top bar */}
               {isAdmin && (
                 <Link
                   href="/admin/verify-users"
@@ -230,11 +284,12 @@ export default function Header() {
               </button>
             </div>
           )}
+          {/* COMMENTED OUT: Make a Gift button
           {!isAdmin && (
             <button className="flex gap-1 items-center hover:text-blue-900 transition-colors text-[12px]"><Gift size={14} /> MAKE A GIFT</button>
-          )}
-          <button className="hover:text-blue-900 transition-colors text-[12px]">CONTACT US</button>
-          <Search size={16} className="cursor-pointer hover:text-blue-900" />
+          )} */}
+
+          <a href="https://www.iethub.org" target="_blank" rel="noopener noreferrer" className="hover:text-[#951114] transition-colors text-[12px] font-black">IETHUB.ORG ↗</a>
         </div>
       </div>
 
@@ -257,8 +312,9 @@ export default function Header() {
 
           <div className="flex items-center gap-4">
             <ul className="hidden lg:flex gap-6 xl:gap-8 transition-all duration-500 items-center">
-              {navItems.map((item, i) => {
+              {newNavItems.map((item, i) => {
 
+                // ── Chat / auth actions ──
                 if (item === "Chat") {
                   return (
                     <li key={i} className="flex items-center gap-3">
@@ -316,6 +372,7 @@ export default function Header() {
                   )
                 }
 
+                // ── Committees / Events / Blogs / News — chevron + dropdown ──
                 return (
                   <li key={i} onMouseEnter={() => setActive(i)}
                     className={`cursor-pointer flex items-center gap-1 transition-all duration-300 font-bold uppercase tracking-wide ${scrolled ? "text-sm" : "text-base"} ${active === i ? "text-blue-700" : isLightMode ? "hover:text-blue-700" : "hover:text-gray-300"}`}
@@ -376,7 +433,6 @@ export default function Header() {
                       </span>
                     )}
                   </button>
-                 
                   {isAdmin && (
                     <Link
                       href="/admin/verify-users"
@@ -393,64 +449,65 @@ export default function Header() {
               )}
             </div>
 
-            {navItems.filter(item => item !== "Chat" && item !== "Verify Users").map((item, i) => (
+            {/* ── Mobile accordion: Committees / Events / Blogs / News ── */}
+            {newNavItems.filter(item => item !== "Chat" && item !== "Verify Users").map((item, i) => (
               <div key={i} className={`border-b ${isLightMode ? "border-gray-100" : "border-white/10"}`}>
                 <button onClick={() => setMobileOpen(mobileOpen === i ? null : i)} className="w-full flex justify-between items-center py-4 text-base font-bold uppercase">
-                  <span className="flex items-center gap-2">
-                    {item}
-                    {item === "Connect" && pendingCount > 0 && (
-                      <span className="bg-white text-[#951114] text-[9px] font-black rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
-                        {pendingCount > 9 ? "9+" : pendingCount}
-                      </span>
-                    )}
-                  </span>
+                  <span>{item}</span>
                   {mobileOpen === i ? <Minus size={18} className="text-blue-500" /> : <Plus size={18} className="text-blue-500" />}
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ${mobileOpen === i ? "max-h-[800px] pb-4" : "max-h-0"}`}>
+                <div className={`overflow-hidden transition-all duration-300 ${mobileOpen === i ? "max-h-[400px] pb-4" : "max-h-0"}`}>
                   <ul className="space-y-3 pl-4 border-l-2 border-blue-500/30 ml-1">
                     {menuData[item]?.map((link, idx) => (
                       <li key={idx} className={`text-sm font-medium opacity-80 ${isLightMode ? "text-gray-600" : "text-gray-200"}`}>
                         {clickableItems.includes(link) ? (
                           <Link href={getRoute(link)} onClick={() => setOpen(false)} className="hover:text-blue-500 transition-colors flex items-center gap-2">
                             {link}
-                            {link === "Connection Requests" && pendingCount > 0 && (
-                              <span className="bg-[#951114] text-white text-[9px] font-black rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
-                                {pendingCount > 9 ? "9+" : pendingCount}
-                              </span>
-                            )}
                           </Link>
-                        ) : link}
+                        ) : (
+                          <button
+                            onClick={() => scrollToSection(sectionMap[link] || sectionMap[item])}
+                            className="hover:text-blue-500 transition-colors text-left"
+                          >
+                            {link}
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
                 </div>
               </div>
             ))}
+
+            {/* ── COMMENTED OUT: old mobile accordion for Connect/Services/Committees/Giving ──
+            {navItems.filter(item => item !== "Chat" && item !== "Verify Users").map((item, i) => (
+              ...old accordion code...
+            ))} */}
           </div>
         </div>
 
         {/* ── Desktop Dropdown ── */}
-        {active !== null && !open && navItems[active] !== "Chat" && navItems[active] !== "Verify Users" && menuData[navItems[active]]?.length > 0 && (
+        {active !== null && !open && newNavItems[active] !== "Chat" && newNavItems[active] !== "Verify Users" && menuData[newNavItems[active]]?.length > 0 && (
           <div className="absolute left-0 w-full bg-white text-black shadow-2xl border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="max-w-[1600px] mx-auto px-12 py-8">
               <div className="mb-4 flex items-center gap-3 w-fit">
-                <div className="text-xl font-bold text-[#951114] uppercase tracking-tight">{navItems[active]}</div>
+                <div className="text-xl font-bold text-[#951114] uppercase tracking-tight">{newNavItems[active]}</div>
                 <ArrowRight size={20} className="text-[#951114]" />
               </div>
               <div className="grid grid-cols-2 gap-x-12 gap-y-3">
-                {menuData[navItems[active]]?.map((link, idx) => (
+                {menuData[newNavItems[active]]?.map((link, idx) => (
                   <div key={idx} className="text-base cursor-pointer font-medium transition-colors">
                     {clickableItems.includes(link) ? (
                       <Link href={getRoute(link)} className="text-gray-700 hover:text-[#951114] flex items-center gap-2">
                         {link}
-                        {link === "Connection Requests" && pendingCount > 0 && (
-                          <span className="bg-[#951114] text-white text-[9px] font-black rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
-                            {pendingCount > 9 ? "9+" : pendingCount}
-                          </span>
-                        )}
                       </Link>
                     ) : (
-                      <span className="text-gray-700 hover:text-[#951114]">{link}</span>
+                      <button
+                        onClick={() => scrollToSection(sectionMap[link] || sectionMap[newNavItems[active]])}
+                        className="text-gray-700 hover:text-[#951114]"
+                      >
+                        {link}
+                      </button>
                     )}
                   </div>
                 ))}
@@ -458,6 +515,13 @@ export default function Header() {
             </div>
           </div>
         )}
+
+        {/* ── COMMENTED OUT: old desktop dropdown ──
+        {active !== null && !open && navItems[active] !== "Chat" && navItems[active] !== "Verify Users" && menuData[navItems[active]]?.length > 0 && (
+          <div className="absolute left-0 w-full bg-white text-black shadow-2xl border-t border-gray-100">
+            ...
+          </div>
+        )} */}
       </nav>
     </header>
   )

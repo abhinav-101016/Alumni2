@@ -9,11 +9,11 @@ import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/adminRoutes.js"
 import profileRoutes from "./routes/profile.js";
 import alumniRoutes from "./routes/alumniRoutes.js";
-import connectionRoutes from "./routes/connectionRoutes.js";
-import chatRoutes from "./routes/chatRoutes.js";
+//import connectionRoutes from "./routes/connectionRoutes.js";
+//import chatRoutes from "./routes/chatRoutes.js";
 import dashboardRouter from "./routes/dashboardRoutes.js";
 
-import { initSocket } from "./socket/socketInit.js";
+//import { initSocket } from "./socket/socketInit.js";
 import redis from "./utils/redis.js";
 
 dotenv.config();
@@ -43,8 +43,8 @@ mongoose
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/alumni", alumniRoutes);
-app.use("/api/connections", connectionRoutes);
-app.use("/api/chat", chatRoutes);
+//app.use("/api/connections", connectionRoutes);
+//app.use("/api/chat", chatRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/dashboard",dashboardRouter)
 
@@ -64,7 +64,7 @@ app.get("/health", async (req, res) => {
 
 // ── HTTP + Socket.IO ────────────────────────────────────────────────
 const httpServer = createServer(app);
-initSocket(httpServer);
+//initSocket(httpServer);
 
 const PORT = process.env.PORT || 3000;
 const server = httpServer.listen(PORT, () => {
@@ -72,7 +72,7 @@ const server = httpServer.listen(PORT, () => {
 });
 
 // ── Graceful shutdown ───────────────────────────────────────────────
-async function shutdown(signal) {
+/*async function shutdown(signal) {
   console.log(`[Server] ${signal} received — shutting down gracefully`);
   server.close(async () => {
     await mongoose.connection.close();
@@ -84,5 +84,6 @@ async function shutdown(signal) {
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT",  () => shutdown("SIGINT"));
+*/
 
 export default app;
