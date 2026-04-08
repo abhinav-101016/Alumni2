@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function AdminLogin() {
   const router = useRouter();
+  
 
   const [formData, setFormData] = useState({
     identifier: "",
@@ -43,7 +44,7 @@ export default function AdminLogin() {
         window.dispatchEvent(new Event("authChange"));
         setMessage("You are Logged in");
         setTimeout(() => {
-          router.push("/");
+          router.push("/dashboard");
         }, 1500);
       } else {
         setMessage(data.message || "Invalid credentials");

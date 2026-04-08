@@ -17,6 +17,7 @@ import dashboardRouter from "./routes/dashboardRoutes.js";
 import redis from "./utils/redis.js";
 
 dotenv.config();
+import "./config/cloudinary.js"
 
 const app = express();
 

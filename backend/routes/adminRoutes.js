@@ -26,7 +26,7 @@ const upload = multer({
   },
 });
 
-// ─── Cloudinary upload helper (streams buffer — no temp file needed) ──────────
+// ─── Cloudinary upload helper ─────────────────────────────────────────────────
 const uploadToCloudinary = (buffer, folder) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -40,7 +40,7 @@ const uploadToCloudinary = (buffer, folder) => {
   });
 };
 
-// ─── Build edit history entry with previous field values ─────────────────────
+// ─── Build edit history entry ─────────────────────────────────────────────────
 const buildHistoryEntry = (admin, oldDoc, changedFields, note) => {
   const changes = {};
   changedFields.forEach((field) => {
@@ -49,7 +49,7 @@ const buildHistoryEntry = (admin, oldDoc, changedFields, note) => {
     }
   });
   return {
-    editedBy:     admin._id,
+    editedBy:     admin.id,  // ✅ was admin._id
     editedByName: admin.name || admin.email,
     editedAt:     new Date(),
     changes,
@@ -58,10 +58,9 @@ const buildHistoryEntry = (admin, oldDoc, changedFields, note) => {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   USER MANAGEMENT  (existing routes — unchanged)
+   USER MANAGEMENT
 ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* GET /api/admin/users?status=pending&role=student&search= */
 router.get("/users", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const { status, role, search } = req.query;
@@ -87,7 +86,6 @@ router.get("/users", authMiddleware, authorizeRoles("admin"), async (req, res) =
   }
 });
 
-/* PATCH /api/admin/users/:id/verify */
 router.patch("/users/:id/verify", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -108,7 +106,6 @@ router.patch("/users/:id/verify", authMiddleware, authorizeRoles("admin"), async
   }
 });
 
-/* PATCH /api/admin/users/:id/reject */
 router.patch("/users/:id/reject", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -129,7 +126,6 @@ router.patch("/users/:id/reject", authMiddleware, authorizeRoles("admin"), async
   }
 });
 
-/* PATCH /api/admin/users/:id/suspend */
 router.patch("/users/:id/suspend", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -153,7 +149,6 @@ router.patch("/users/:id/suspend", authMiddleware, authorizeRoles("admin"), asyn
    BLOG ROUTES   /api/admin/blogs
 ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* GET /api/admin/blogs — all blogs including drafts */
 router.get("/blogs", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 }).select("-editHistory");
@@ -163,7 +158,6 @@ router.get("/blogs", authMiddleware, authorizeRoles("admin"), async (req, res) =
   }
 });
 
-/* GET /api/admin/blogs/:id — single blog with full edit history */
 router.get("/blogs/:id", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
@@ -174,7 +168,6 @@ router.get("/blogs/:id", authMiddleware, authorizeRoles("admin"), async (req, re
   }
 });
 
-/* POST /api/admin/blogs */
 router.post("/blogs", authMiddleware, authorizeRoles("admin"), upload.single("image"), async (req, res) => {
   try {
     const { title, excerpt, content, category, tags, status } = req.body;
@@ -191,7 +184,7 @@ router.post("/blogs", authMiddleware, authorizeRoles("admin"), upload.single("im
       tags:   tags ? JSON.parse(tags) : [],
       status: status || "draft",
       image,
-      createdBy:      admin._id,
+      createdBy:      admin.id,  // ✅ was admin._id
       createdByName:  admin.name || admin.email,
       createdByEmail: admin.email,
     });
@@ -202,7 +195,6 @@ router.post("/blogs", authMiddleware, authorizeRoles("admin"), upload.single("im
   }
 });
 
-/* PUT /api/admin/blogs/:id */
 router.put("/blogs/:id", authMiddleware, authorizeRoles("admin"), upload.single("image"), async (req, res) => {
   try {
     const { title, excerpt, content, category, tags, status, note } = req.body;
@@ -234,7 +226,7 @@ router.put("/blogs/:id", authMiddleware, authorizeRoles("admin"), upload.single(
     if (tags)     blog.tags     = JSON.parse(tags);
     if (status)   blog.status   = status;
 
-    blog.lastEditedBy     = admin._id;
+    blog.lastEditedBy     = admin.id;  // ✅ was admin._id
     blog.lastEditedByName = admin.name || admin.email;
     blog.lastEditedAt     = new Date();
 
@@ -245,7 +237,6 @@ router.put("/blogs/:id", authMiddleware, authorizeRoles("admin"), upload.single(
   }
 });
 
-/* DELETE /api/admin/blogs/:id */
 router.delete("/blogs/:id", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
@@ -262,7 +253,6 @@ router.delete("/blogs/:id", authMiddleware, authorizeRoles("admin"), async (req,
    EVENT ROUTES   /api/admin/events
 ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* GET /api/admin/events */
 router.get("/events", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const events = await Event.find().sort({ startDate: -1 }).select("-editHistory");
@@ -272,7 +262,6 @@ router.get("/events", authMiddleware, authorizeRoles("admin"), async (req, res) 
   }
 });
 
-/* GET /api/admin/events/:id */
 router.get("/events/:id", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -283,7 +272,6 @@ router.get("/events/:id", authMiddleware, authorizeRoles("admin"), async (req, r
   }
 });
 
-/* POST /api/admin/events */
 router.post("/events", authMiddleware, authorizeRoles("admin"), upload.single("image"), async (req, res) => {
   try {
     const {
@@ -305,7 +293,7 @@ router.post("/events", authMiddleware, authorizeRoles("admin"), upload.single("i
       registrationUrl, registrationDeadline, maxAttendees,
       status: status || "upcoming",
       image,
-      createdBy:      admin._id,
+      createdBy:      admin.id,  // ✅ was admin._id
       createdByName:  admin.name || admin.email,
       createdByEmail: admin.email,
     });
@@ -316,7 +304,6 @@ router.post("/events", authMiddleware, authorizeRoles("admin"), upload.single("i
   }
 });
 
-/* PUT /api/admin/events/:id */
 router.put("/events/:id", authMiddleware, authorizeRoles("admin"), upload.single("image"), async (req, res) => {
   try {
     const {
@@ -362,7 +349,7 @@ router.put("/events/:id", authMiddleware, authorizeRoles("admin"), upload.single
     if (isVirtual !== undefined) event.isVirtual = isVirtual === "true";
     if (status)       event.status       = status;
 
-    event.lastEditedBy     = admin._id;
+    event.lastEditedBy     = admin.id;  // ✅ was admin._id
     event.lastEditedByName = admin.name || admin.email;
     event.lastEditedAt     = new Date();
 
@@ -373,7 +360,6 @@ router.put("/events/:id", authMiddleware, authorizeRoles("admin"), upload.single
   }
 });
 
-/* DELETE /api/admin/events/:id */
 router.delete("/events/:id", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -390,7 +376,6 @@ router.delete("/events/:id", authMiddleware, authorizeRoles("admin"), async (req
    NEWS ROUTES   /api/admin/news
 ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* GET /api/admin/news */
 router.get("/news", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const newsList = await News.find().sort({ createdAt: -1 }).select("-editHistory");
@@ -400,7 +385,6 @@ router.get("/news", authMiddleware, authorizeRoles("admin"), async (req, res) =>
   }
 });
 
-/* GET /api/admin/news/:id */
 router.get("/news/:id", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const news = await News.findById(req.params.id);
@@ -411,7 +395,6 @@ router.get("/news/:id", authMiddleware, authorizeRoles("admin"), async (req, res
   }
 });
 
-/* POST /api/admin/news */
 router.post("/news", authMiddleware, authorizeRoles("admin"), upload.single("image"), async (req, res) => {
   try {
     const { title, excerpt, content, category, status } = req.body;
@@ -427,7 +410,7 @@ router.post("/news", authMiddleware, authorizeRoles("admin"), upload.single("ima
       title, excerpt, content, category,
       status: status || "draft",
       image,
-      createdBy:      admin._id,
+      createdBy:      admin.id,  // ✅ was admin._id
       createdByName:  admin.name || admin.email,
       createdByEmail: admin.email,
     });
@@ -438,7 +421,6 @@ router.post("/news", authMiddleware, authorizeRoles("admin"), upload.single("ima
   }
 });
 
-/* PUT /api/admin/news/:id */
 router.put("/news/:id", authMiddleware, authorizeRoles("admin"), upload.single("image"), async (req, res) => {
   try {
     const { title, excerpt, content, category, status, note } = req.body;
@@ -469,7 +451,7 @@ router.put("/news/:id", authMiddleware, authorizeRoles("admin"), upload.single("
     if (category) news.category = category;
     if (status)   news.status   = status;
 
-    news.lastEditedBy     = admin._id;
+    news.lastEditedBy     = admin.id;  // ✅ was admin._id
     news.lastEditedByName = admin.name || admin.email;
     news.lastEditedAt     = new Date();
 
@@ -480,7 +462,6 @@ router.put("/news/:id", authMiddleware, authorizeRoles("admin"), upload.single("
   }
 });
 
-/* DELETE /api/admin/news/:id */
 router.delete("/news/:id", authMiddleware, authorizeRoles("admin"), async (req, res) => {
   try {
     const news = await News.findById(req.params.id);

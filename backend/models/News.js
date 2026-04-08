@@ -47,8 +47,8 @@ const NewsSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ["Alumni Community", "Campus News", "Industry", "Awards", "Announcements", "Other"],
-      default: "Other",
+      enum: ["Announcement", "Achievement", "Event", "Research", "Industry", "General"],
+      default: "General",
     },
 
     // ── Image ──

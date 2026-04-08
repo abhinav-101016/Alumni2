@@ -1,11 +1,11 @@
 // 📁 backend/controllers/adminContentController.js
-const Blog  = require("../models/Blog")
-const Event = require("../models/Event")
-const News  = require("../models/News")
-const cloudinary = require("cloudinary").v2   // adjust if you use a different upload lib
-const streamifier = require("streamifier")    // npm i streamifier
+import Blog  from "../models/Blog.js"
+import Event from "../models/Event.js"
+import News  from "../models/News.js"
+import cloudinary from "../config/cloudinary.js"
+import streamifier from "streamifier"
 
-// ─── Cloudinary upload helper (streams buffer — no temp file needed) ─────────
+// ─── Cloudinary upload helper ─────────────────────────────────────────────────
 const uploadToCloudinary = (buffer, folder) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -19,17 +19,16 @@ const uploadToCloudinary = (buffer, folder) => {
   })
 }
 
-// ─── helper: build editHistory entry with previous values ────────────────────
+// ─── helper: build editHistory entry ─────────────────────────────────────────
 const buildHistoryEntry = (admin, oldDoc, changedFields, note) => {
   const changes = {}
   changedFields.forEach((field) => {
     if (oldDoc[field] !== undefined) {
-      // for nested image object store just the url string
       changes[field] = field === "image" ? oldDoc.image?.url : oldDoc[field]
     }
   })
   return {
-    editedBy:     admin._id,
+    editedBy:     admin.id,
     editedByName: admin.name || admin.email,
     editedAt:     new Date(),
     changes,
@@ -42,9 +41,9 @@ const buildHistoryEntry = (admin, oldDoc, changedFields, note) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // POST /api/admin/blogs
-exports.createBlog = async (req, res) => {
+export const createBlog = async (req, res) => {
   try {
-    const { title, excerpt, content, category, tags, status, note } = req.body
+    const { title, excerpt, content, category, tags, status } = req.body
     const admin = req.user
 
     let image = {}
@@ -61,7 +60,7 @@ exports.createBlog = async (req, res) => {
       tags: tags ? JSON.parse(tags) : [],
       status: status || "draft",
       image,
-      createdBy:      admin._id,
+      createdBy:      admin.id,
       createdByName:  admin.name || admin.email,
       createdByEmail: admin.email,
     })
@@ -73,7 +72,7 @@ exports.createBlog = async (req, res) => {
 }
 
 // PUT /api/admin/blogs/:id
-exports.updateBlog = async (req, res) => {
+export const updateBlog = async (req, res) => {
   try {
     const { title, excerpt, content, category, tags, status, note } = req.body
     const admin = req.user
@@ -81,7 +80,6 @@ exports.updateBlog = async (req, res) => {
     const blog = await Blog.findById(req.params.id)
     if (!blog) return res.status(404).json({ success: false, message: "Blog not found" })
 
-    // figure out which fields are actually changing
     const changedFields = []
     if (title    && title    !== blog.title)    changedFields.push("title")
     if (excerpt  && excerpt  !== blog.excerpt)  changedFields.push("excerpt")
@@ -89,23 +87,17 @@ exports.updateBlog = async (req, res) => {
     if (category && category !== blog.category) changedFields.push("category")
     if (status   && status   !== blog.status)   changedFields.push("status")
 
-    // handle new image upload
     if (req.file) {
-      // delete old image from cloudinary if exists
-      if (blog.image?.publicId) {
-        await cloudinary.uploader.destroy(blog.image.publicId)
-      }
+      if (blog.image?.publicId) await cloudinary.uploader.destroy(blog.image.publicId)
       const result = await uploadToCloudinary(req.file.buffer, "iet-alumni/blogs")
       changedFields.push("image")
       blog.image = { url: result.secure_url, publicId: result.public_id, altText: title || blog.title }
     }
 
-    // save history entry BEFORE applying changes
     if (changedFields.length > 0) {
       blog.editHistory.push(buildHistoryEntry(admin, blog, changedFields, note))
     }
 
-    // apply updates
     if (title)    blog.title    = title
     if (excerpt)  blog.excerpt  = excerpt
     if (content)  blog.content  = content
@@ -113,7 +105,7 @@ exports.updateBlog = async (req, res) => {
     if (tags)     blog.tags     = JSON.parse(tags)
     if (status)   blog.status   = status
 
-    blog.lastEditedBy     = admin._id
+    blog.lastEditedBy     = admin.id
     blog.lastEditedByName = admin.name || admin.email
     blog.lastEditedAt     = new Date()
 
@@ -125,14 +117,12 @@ exports.updateBlog = async (req, res) => {
 }
 
 // DELETE /api/admin/blogs/:id
-exports.deleteBlog = async (req, res) => {
+export const deleteBlog = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id)
     if (!blog) return res.status(404).json({ success: false, message: "Blog not found" })
 
-    if (blog.image?.publicId) {
-      await cloudinary.uploader.destroy(blog.image.publicId)
-    }
+    if (blog.image?.publicId) await cloudinary.uploader.destroy(blog.image.publicId)
     await blog.deleteOne()
     res.json({ success: true, message: "Blog deleted" })
   } catch (err) {
@@ -140,20 +130,18 @@ exports.deleteBlog = async (req, res) => {
   }
 }
 
-// GET /api/admin/blogs  (all blogs including drafts — admin only)
-exports.getAllBlogsAdmin = async (req, res) => {
+// GET /api/admin/blogs
+export const getAllBlogsAdmin = async (req, res) => {
   try {
-    const blogs = await Blog.find()
-      .sort({ createdAt: -1 })
-      .select("-editHistory") // exclude heavy history from list view
+    const blogs = await Blog.find().sort({ createdAt: -1 }).select("-editHistory")
     res.json({ success: true, blogs })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }
 }
 
-// GET /api/admin/blogs/:id  (includes full edit history)
-exports.getBlogAdmin = async (req, res) => {
+// GET /api/admin/blogs/:id
+export const getBlogAdmin = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id)
     if (!blog) return res.status(404).json({ success: false, message: "Blog not found" })
@@ -168,7 +156,8 @@ exports.getBlogAdmin = async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // POST /api/admin/events
-exports.createEvent = async (req, res) => {
+export const createEvent = async (req, res) => {
+  console.log("req.user →", req.user) 
   try {
     const {
       title, description, startDate, endDate, startTime, endTime,
@@ -189,7 +178,7 @@ exports.createEvent = async (req, res) => {
       registrationUrl, registrationDeadline, maxAttendees,
       status: status || "upcoming",
       image,
-      createdBy:      admin._id,
+      createdBy:      admin.id,
       createdByName:  admin.name || admin.email,
       createdByEmail: admin.email,
     })
@@ -201,7 +190,7 @@ exports.createEvent = async (req, res) => {
 }
 
 // PUT /api/admin/events/:id
-exports.updateEvent = async (req, res) => {
+export const updateEvent = async (req, res) => {
   try {
     const {
       title, description, startDate, endDate, startTime, endTime,
@@ -248,7 +237,7 @@ exports.updateEvent = async (req, res) => {
     if (isVirtual !== undefined) event.isVirtual = isVirtual === "true"
     if (status)      event.status      = status
 
-    event.lastEditedBy     = admin._id
+    event.lastEditedBy     = admin.id
     event.lastEditedByName = admin.name || admin.email
     event.lastEditedAt     = new Date()
 
@@ -260,7 +249,7 @@ exports.updateEvent = async (req, res) => {
 }
 
 // DELETE /api/admin/events/:id
-exports.deleteEvent = async (req, res) => {
+export const deleteEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id)
     if (!event) return res.status(404).json({ success: false, message: "Event not found" })
@@ -273,7 +262,7 @@ exports.deleteEvent = async (req, res) => {
 }
 
 // GET /api/admin/events
-exports.getAllEventsAdmin = async (req, res) => {
+export const getAllEventsAdmin = async (req, res) => {
   try {
     const events = await Event.find().sort({ startDate: -1 }).select("-editHistory")
     res.json({ success: true, events })
@@ -283,7 +272,7 @@ exports.getAllEventsAdmin = async (req, res) => {
 }
 
 // GET /api/admin/events/:id
-exports.getEventAdmin = async (req, res) => {
+export const getEventAdmin = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id)
     if (!event) return res.status(404).json({ success: false, message: "Event not found" })
@@ -298,7 +287,7 @@ exports.getEventAdmin = async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // POST /api/admin/news
-exports.createNews = async (req, res) => {
+export const createNews = async (req, res) => {
   try {
     const { title, excerpt, content, category, status } = req.body
     const admin = req.user
@@ -313,7 +302,7 @@ exports.createNews = async (req, res) => {
       title, excerpt, content, category,
       status: status || "draft",
       image,
-      createdBy:      admin._id,
+      createdBy:      admin.id,
       createdByName:  admin.name || admin.email,
       createdByEmail: admin.email,
     })
@@ -325,7 +314,7 @@ exports.createNews = async (req, res) => {
 }
 
 // PUT /api/admin/news/:id
-exports.updateNews = async (req, res) => {
+export const updateNews = async (req, res) => {
   try {
     const { title, excerpt, content, category, status, note } = req.body
     const admin = req.user
@@ -357,7 +346,7 @@ exports.updateNews = async (req, res) => {
     if (category) news.category = category
     if (status)   news.status   = status
 
-    news.lastEditedBy     = admin._id
+    news.lastEditedBy     = admin.id
     news.lastEditedByName = admin.name || admin.email
     news.lastEditedAt     = new Date()
 
@@ -369,7 +358,7 @@ exports.updateNews = async (req, res) => {
 }
 
 // DELETE /api/admin/news/:id
-exports.deleteNews = async (req, res) => {
+export const deleteNews = async (req, res) => {
   try {
     const news = await News.findById(req.params.id)
     if (!news) return res.status(404).json({ success: false, message: "News not found" })
@@ -382,7 +371,7 @@ exports.deleteNews = async (req, res) => {
 }
 
 // GET /api/admin/news
-exports.getAllNewsAdmin = async (req, res) => {
+export const getAllNewsAdmin = async (req, res) => {
   try {
     const newsList = await News.find().sort({ createdAt: -1 }).select("-editHistory")
     res.json({ success: true, news: newsList })
@@ -392,7 +381,7 @@ exports.getAllNewsAdmin = async (req, res) => {
 }
 
 // GET /api/admin/news/:id
-exports.getNewsAdmin = async (req, res) => {
+export const getNewsAdmin = async (req, res) => {
   try {
     const news = await News.findById(req.params.id)
     if (!news) return res.status(404).json({ success: false, message: "News not found" })

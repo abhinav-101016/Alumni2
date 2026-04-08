@@ -57,10 +57,12 @@ const EventSchema = new mongoose.Schema(
 
     // ── Location ──
     location: {
-      type: String,
-      trim: true,
-      required: [true, "Event location is required"],
-    },
+  type: String,
+  trim: true,
+  required: function() {
+    return !this.isVirtual  // only required if not virtual
+  },
+},
     isVirtual:  { type: Boolean, default: false },
     virtualUrl: { type: String, trim: true }, // Zoom/Meet link if virtual
 
