@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/adminRoutes.js"
 import profileRoutes from "./routes/profile.js";
 import alumniRoutes from "./routes/alumniRoutes.js";
+import adminContentRoutes from "./routes/adminContent.js";
 
 import publicContentRoutes from "./routes/publicContentRoutes.js"
 //import connectionRoutes from "./routes/connectionRoutes.js";
@@ -51,6 +52,7 @@ app.use("/api/alumni", alumniRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/dashboard",dashboardRouter)
 app.use("/api", publicContentRoutes)
+app.use("/api/admin/content", adminContentRoutes);
 
 // Health check — also verifies Redis is alive
 app.get("/health", async (req, res) => {

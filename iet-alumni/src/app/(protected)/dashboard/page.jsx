@@ -1,12 +1,13 @@
 // 📁 src/app/(protected)/dashboard/page.jsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Users, Clock, CheckCircle, XCircle, ShieldCheck, Mail, Phone,
   MapPin, GraduationCap, Briefcase, Star, Github, Linkedin,
-  Twitter, Globe, UserCheck, UserPlus, AlertCircle, CalendarDays,
-  BookOpen, Building2, ChevronRight, Hash
+  Twitter, Globe, AlertCircle, CalendarDays,
+  BookOpen, Building2, ChevronRight, ChevronLeft,
+  Newspaper, Trash2, AlertTriangle, X, RefreshCw,
 } from "lucide-react";
 
 const fmt = (d) =>
@@ -196,18 +197,341 @@ function StatusBanners({ user }) {
 }
 
 /* ══════════════════════════════════════════
+   ADMIN CONTENT SECTION
+══════════════════════════════════════════ */
+
+const TAB_CFG = {
+  blogs:  { label: "Blogs",  Icon: BookOpen,     accent: "#7c3aed", light: "#ede9fe", border: "#c4b5fd" },
+  events: { label: "Events", Icon: CalendarDays, accent: "#0369a1", light: "#e0f2fe", border: "#7dd3fc" },
+  news:   { label: "News",   Icon: Newspaper,    accent: "#b45309", light: "#fef3c7", border: "#fcd34d" },
+};
+
+const CONTENT_STATUS_CFG = {
+  draft:     { label: "Draft",     bg: "#f1f5f9", border: "#cbd5e1", color: "#475569" },
+  published: { label: "Published", bg: "#dcfce7", border: "#86efac", color: "#15803d" },
+  archived:  { label: "Archived",  bg: "#f3f4f6", border: "#d1d5db", color: "#6b7280" },
+  upcoming:  { label: "Upcoming",  bg: "#eff6ff", border: "#93c5fd", color: "#1d4ed8" },
+  ongoing:   { label: "Ongoing",   bg: "#dcfce7", border: "#86efac", color: "#15803d" },
+  completed: { label: "Completed", bg: "#f1f5f9", border: "#cbd5e1", color: "#475569" },
+  cancelled: { label: "Cancelled", bg: "#fee2e2", border: "#fca5a5", color: "#dc2626" },
+};
+
+const STATUS_OPTS = {
+  blogs:  ["", "draft", "published", "archived"],
+  events: ["", "upcoming", "ongoing", "completed", "cancelled"],
+  news:   ["", "draft", "published", "archived"],
+};
+
+function ContentStatusPill({ status }) {
+  const s = CONTENT_STATUS_CFG[status] ?? { label: status, bg: "#f1f5f9", border: "#cbd5e1", color: "#64748b" };
+  return (
+    <span
+      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+      style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color }}
+    >
+      {s.label}
+    </span>
+  );
+}
+
+function ContentDeleteModal({ item, tab, onConfirm, onCancel, loading }) {
+  if (!item) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)" }}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+        <div className="flex items-start gap-4 mb-5">
+          <div className="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+            <AlertTriangle size={20} className="text-red-600" />
+          </div>
+          <div>
+            <h3 className="font-black text-slate-900 text-lg">Delete {tab.slice(0, -1)}?</h3>
+            <p className="text-slate-500 text-sm mt-1">This action cannot be undone.</p>
+          </div>
+          <button onClick={onCancel} className="ml-auto text-slate-400 hover:text-slate-600 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-6">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Title</p>
+          <p className="text-sm font-semibold text-slate-800 line-clamp-2">{item.title}</p>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-50 transition-colors">
+            Cancel
+          </button>
+          <button onClick={onConfirm} disabled={loading}
+            className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
+            {loading
+              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : <Trash2 size={14} />}
+            {loading ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminContentSection({ adminId }) {
+  const [tab, setTab]               = useState("blogs");
+  const [page, setPage]             = useState(1);
+  const [status, setStatus]         = useState("");
+  const [counts, setCounts]         = useState({});
+  const [items, setItems]           = useState([]);
+  const [pagination, setPagination] = useState({});
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [toast, setToast]           = useState(null);
+
+  const fetchContent = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const params = new URLSearchParams({ tab, page, limit: 8, ...(status && { status }) });
+      const res  = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/content?${params}`,
+        { credentials: "include" }
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || "Failed to load");
+      setCounts(json.counts);
+      setItems(json.items);
+      setPagination(json.pagination);
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
+  }, [tab, page, status]);
+
+  useEffect(() => { fetchContent(); }, [fetchContent]);
+
+  const handleTabChange = (t) => { setTab(t); setPage(1); setStatus(""); };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      const res  = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/content/${tab}/${deleteTarget._id}`,
+        { method: "DELETE", credentials: "include" }
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      setDeleteTarget(null);
+      showToast("Deleted successfully", "success");
+      fetchContent();
+    } catch (e) { showToast(e.message, "error"); }
+    finally { setDeleteLoading(false); }
+  };
+
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const cfg = TAB_CFG[tab];
+
+  return (
+    <>
+      <div className="space-y-5">
+        {/* Section header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-black text-slate-600 uppercase tracking-widest">Content Manager</h2>
+          <button onClick={fetchContent}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition-colors">
+            <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh
+          </button>
+        </div>
+
+        {/* Stat cards */}
+        <div className="grid grid-cols-3 gap-4">
+          {Object.entries(TAB_CFG).map(([id, { label, Icon, accent, light, border }]) => (
+            <button key={id} onClick={() => handleTabChange(id)}
+              className="bg-white border rounded-2xl p-4 flex items-center gap-3 transition-all hover:shadow-md text-left"
+              style={{ borderColor: tab === id ? border : "#e2e8f0" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: tab === id ? accent : "#f1f5f9" }}>
+                <Icon size={16} style={{ color: tab === id ? "white" : "#94a3b8" }} />
+              </div>
+              <div>
+                <p className="text-xl font-black text-slate-900 tabular-nums">{counts[id] ?? "—"}</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Tabs + status filter */}
+        <div className="flex flex-wrap items-center gap-2">
+          {Object.entries(TAB_CFG).map(([id, { label, Icon, accent, light, border }]) => (
+            <button key={id} onClick={() => handleTabChange(id)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all border"
+              style={tab === id
+                ? { background: light, border: `1.5px solid ${border}`, color: accent }
+                : { background: "white", border: "1.5px solid #e2e8f0", color: "#64748b" }}>
+              <Icon size={13} /> {label}
+              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black"
+                style={tab === id
+                  ? { background: accent, color: "white" }
+                  : { background: "#e2e8f0", color: "#64748b" }}>
+                {counts[id] ?? 0}
+              </span>
+            </button>
+          ))}
+          <div className="flex gap-1.5 ml-auto flex-wrap">
+            {STATUS_OPTS[tab].map((s) => (
+              <button key={s || "all"} onClick={() => { setStatus(s); setPage(1); }}
+                className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border"
+                style={status === s
+                  ? { background: cfg.accent, color: "white", borderColor: cfg.accent }
+                  : { background: "white", color: "#64748b", borderColor: "#e2e8f0" }}>
+                {s ? (CONTENT_STATUS_CFG[s]?.label ?? s) : "All"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden">
+          <div className="px-6 py-3 border-b border-slate-200 flex items-center justify-between">
+            <span className="text-xs font-black text-slate-600 uppercase tracking-widest flex items-center gap-2">
+              <cfg.Icon size={12} style={{ color: cfg.accent }} /> {cfg.label}
+              {pagination.total != null && (
+                <span className="text-slate-400 font-semibold">({pagination.total})</span>
+              )}
+            </span>
+            {pagination.totalPages > 1 && (
+              <span className="text-xs text-slate-400 font-semibold">
+                Page {pagination.page} / {pagination.totalPages}
+              </span>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12 gap-3">
+              <div className="w-6 h-6 rounded-full border-4 border-t-transparent animate-spin"
+                style={{ borderColor: cfg.light, borderTopColor: cfg.accent }} />
+              <p className="text-slate-500 text-sm font-semibold">Loading…</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center py-12 gap-2">
+              <AlertTriangle size={24} className="text-red-400" />
+              <p className="text-slate-600 text-sm font-bold">{error}</p>
+              <button onClick={fetchContent} className="text-xs text-blue-600 font-bold hover:underline">
+                Try again
+              </button>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="flex flex-col items-center py-12 gap-2">
+              <cfg.Icon size={24} className="text-slate-300" />
+              <p className="text-slate-400 text-sm">No {cfg.label.toLowerCase()} found.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {items.map((item) => {
+                const href = `/${tab}/${item._id}`;
+                const isOwner = String(item.createdBy) === String(adminId);
+                return (
+                  <div key={item._id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-slate-50 transition-colors group">
+                    {/* Clickable area */}
+                    <a href={href} className="flex items-center gap-4 flex-1 min-w-0">
+                      {/* Thumbnail */}
+                      <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 border border-slate-200">
+                        {item.image?.url
+                          ? <img src={item.image.url} alt={item.title} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center">
+                              <cfg.Icon size={14} className="text-slate-300" />
+                            </div>
+                        }
+                      </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                          <p className="text-sm font-bold text-slate-900 truncate group-hover:text-[#7c3aed] transition-colors">{item.title}</p>
+                          <ContentStatusPill status={item.status} />
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 text-[11px] text-slate-400">
+                          <span>By <span className="font-semibold text-slate-600">{item.createdByName}</span></span>
+                          <span>{fmt(item.createdAt)}</span>
+                          {item.category && <span className="text-slate-500 font-semibold">{item.category}</span>}
+                          {item.startDate && <span>{fmt(item.startDate)}</span>}
+                          {item.location && <span>{item.location}</span>}
+                        </div>
+                      </div>
+                    </a>
+                    {/* Delete — only shown for own content */}
+                    {isOwner && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); setDeleteTarget(item); }}
+                        className="w-8 h-8 rounded-lg bg-red-50 border border-red-200 text-red-500 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 flex-shrink-0"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && !error && pagination.totalPages > 1 && (
+            <div className="px-6 py-3 border-t border-slate-200 flex items-center justify-between">
+              <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                <ChevronLeft size={13} /> Prev
+              </button>
+              <div className="flex gap-1">
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  .filter((p) => Math.abs(p - page) <= 2)
+                  .map((p) => (
+                    <button key={p} onClick={() => setPage(p)}
+                      className="w-7 h-7 rounded-lg text-xs font-bold transition-all border"
+                      style={p === page
+                        ? { background: cfg.accent, color: "white", borderColor: cfg.accent }
+                        : { background: "white", color: "#64748b", borderColor: "#e2e8f0" }}>
+                      {p}
+                    </button>
+                  ))}
+              </div>
+              <button disabled={page >= pagination.totalPages} onClick={() => setPage((p) => p + 1)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                Next <ChevronRight size={13} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Delete modal */}
+      <ContentDeleteModal
+        item={deleteTarget}
+        tab={tab}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleteLoading}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border text-sm font-bold"
+          style={toast.type === "success"
+            ? { background: "#f0fdf4", border: "1px solid #86efac", color: "#15803d" }
+            : { background: "#fff1f2", border: "1px solid #fca5a5", color: "#dc2626" }}>
+          {toast.type === "success" ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+          {toast.msg}
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ══════════════════════════════════════════
    ADMIN DASHBOARD
 ══════════════════════════════════════════ */
 function AdminDashboard({ data }) {
-  const { admin, stats, recentUsers } = data;
-
-  const cards = [
-    { icon: Users,       label: "Total Users",      value: stats.totalUsers,           accentClass: "bg-violet-600" },
-    { icon: UserPlus,    label: "New This Week",     value: stats.newRegistrations,     accentClass: "bg-sky-600"    },
-    { icon: Clock,       label: "Pending Approval",  value: stats.pendingVerifications, accentClass: "bg-amber-600"  },
-    { icon: UserCheck,   label: "Active Users",      value: stats.activeUsers,          accentClass: "bg-emerald-600"},
-    { icon: AlertCircle, label: "Suspended",         value: stats.suspendedUsers,       accentClass: "bg-rose-700"   },
-  ];
+  const { admin, stats } = data;
 
   return (
     <div className="space-y-8">
@@ -218,47 +542,18 @@ function AdminDashboard({ data }) {
         <p className="text-slate-600 text-sm mt-1">{admin.email}</p>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {cards.map((c) => <StatCard key={c.label} {...c} />)}
+      {/* Total admins card */}
+      <div className="max-w-xs">
+        <StatCard
+          icon={Users}
+          label="Total Admins Registered"
+          value={stats.totalAdmins}
+          accentClass="bg-violet-600"
+        />
       </div>
 
-      {/* Recent registrations */}
-      <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-xs font-black text-slate-600 uppercase tracking-widest">Recent Registrations</h2>
-          <a href="/admin/verify-users"
-            className="text-xs font-bold text-[#c0392b] flex items-center gap-1 hover:text-red-500 transition-colors">
-            View all <ChevronRight size={12} />
-          </a>
-        </div>
-        <div className="divide-y divide-slate-100">
-          {recentUsers.length === 0 && (
-            <p className="text-center text-slate-400 text-sm py-10">No users yet.</p>
-          )}
-          {recentUsers.map((u) => {
-            const st = STATUS_CFG[u.accountStatus] ?? STATUS_CFG.pending;
-            const SIcon = st.icon;
-            return (
-              <div key={u._id}
-                className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#800000] to-red-900 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
-                  {initials(u.name)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-900 truncate">{u.name}</p>
-                  <p className="text-xs text-slate-500 truncate">{u.email}</p>
-                </div>
-                <span className="text-xs font-semibold text-slate-500 uppercase hidden md:block">{u.role}</span>
-                <Pill pillStyle={st.pillStyle} className="hidden sm:inline-flex">
-                  <SIcon size={10} /> {st.label}
-                </Pill>
-                <p className="text-xs text-slate-400 hidden lg:block whitespace-nowrap">{fmt(u.createdAt)}</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Content Manager */}
+      <AdminContentSection adminId={admin._id} />
     </div>
   );
 }
@@ -276,29 +571,22 @@ function StudentDashboard({ data }) {
       {/* Profile card */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8">
         <div className="flex flex-col sm:flex-row gap-6 items-start">
-          {/* Avatar */}
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#800000] to-red-900 flex items-center justify-center text-white text-2xl font-black flex-shrink-0 shadow-lg shadow-red-900/20">
             {initials(user.name)}
           </div>
-
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3 mb-2">
               <h1 className="text-2xl font-black text-slate-900">{user.name}</h1>
               <Pill pillStyle={{ background: "#f1f5f9", border: "1px solid #cbd5e1", color: "#475569" }}>Student</Pill>
             </div>
-
-            {/* ── Fixed contact info spacing ── */}
             <ContactInfo
               email={user.email}
               phone={user.phone}
               city={user.profile?.location?.city}
               country={user.profile?.location?.country}
             />
-
             <VerificationBadges verification={user.verification} accountStatus={user.accountStatus} />
           </div>
-
-          {/* Connection counts */}
           <div className="flex gap-8 text-center sm:flex-shrink-0">
             <div>
               <p className="text-2xl font-black text-slate-900">{stats.connectionsCount}</p>
@@ -338,8 +626,8 @@ function StudentDashboard({ data }) {
 function AlumniDashboard({ data }) {
   const { user, stats } = data;
   const experiences = user.professional?.experiences ?? [];
-  const skills = user.professional?.skills ?? [];
-  const social = user.profile?.socialLinks ?? {};
+  const skills      = user.professional?.skills ?? [];
+  const social      = user.profile?.socialLinks ?? {};
 
   const SOCIAL_LINKS = [
     { key: "linkedin",  Icon: Linkedin, label: "LinkedIn"  },
@@ -357,7 +645,6 @@ function AlumniDashboard({ data }) {
       {/* Profile hero */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8">
         <div className="flex flex-col sm:flex-row gap-6 items-start">
-          {/* Avatar / pic */}
           {user.profile?.profilePicUrl ? (
             <img src={user.profile.profilePicUrl} alt={user.name}
               className="w-20 h-20 rounded-2xl object-cover ring-2 ring-slate-200 flex-shrink-0" />
@@ -366,34 +653,26 @@ function AlumniDashboard({ data }) {
               {initials(user.name)}
             </div>
           )}
-
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3 mb-1">
               <h1 className="text-2xl font-black text-slate-900">{user.name}</h1>
               <Pill pillStyle={{ background: "#fff1f2", border: "1px solid #fecdd3", color: "#9f1239" }}>Alumni</Pill>
             </div>
-
             {currentJob && (
               <p className="text-slate-600 text-sm font-semibold mb-2">
                 {currentJob.designation} · {currentJob.company}
               </p>
             )}
-
-            {/* ── Fixed contact info spacing ── */}
             <ContactInfo
               email={user.email}
               phone={user.phone}
               city={user.profile?.location?.city}
               country={user.profile?.location?.country}
             />
-
             {user.profile?.bio && (
               <p className="text-slate-600 text-sm leading-relaxed mb-3 max-w-2xl">{user.profile.bio}</p>
             )}
-
             <VerificationBadges verification={user.verification} accountStatus={user.accountStatus} />
-
-            {/* Social links */}
             {SOCIAL_LINKS.some((s) => social[s.key]) && (
               <div className="flex gap-2 mt-3 flex-wrap">
                 {SOCIAL_LINKS.filter((s) => social[s.key]).map(({ key, Icon, label }) => (
@@ -405,8 +684,6 @@ function AlumniDashboard({ data }) {
               </div>
             )}
           </div>
-
-          {/* Stats */}
           <div className="flex gap-8 text-center sm:flex-shrink-0">
             <div>
               <p className="text-2xl font-black text-slate-900">{stats.connectionsCount}</p>
@@ -443,9 +720,7 @@ function AlumniDashboard({ data }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-0.5">
                       <p className="text-sm font-bold text-slate-900">{exp.designation}</p>
-                      {exp.isCurrent && (
-                        <Pill pillStyle={PILL_S.green}>Current</Pill>
-                      )}
+                      {exp.isCurrent && <Pill pillStyle={PILL_S.green}>Current</Pill>}
                     </div>
                     <p className="text-sm text-slate-700 font-semibold">{exp.company}</p>
                     {exp.location && (
@@ -477,15 +752,13 @@ function AlumniDashboard({ data }) {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {skills.map((sk, i) => (
-                 <span key={i}
-  className="px-3 py-1.5 rounded-xl bg-[#951114] text-white text-xs font-bold">
-  {sk}
-</span>
+                  <span key={i} className="px-3 py-1.5 rounded-xl bg-[#951114] text-white text-xs font-bold">
+                    {sk}
+                  </span>
                 ))}
               </div>
             )}
           </div>
-
           <div className="bg-white border border-slate-200 rounded-3xl p-5">
             <h2 className="text-xs font-black text-slate-600 uppercase tracking-widest mb-4 flex items-center gap-2">
               <GraduationCap size={13} /> Academic
@@ -513,7 +786,7 @@ export default function DashboardPage() {
     (async () => {
       try {
         const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard`;
-        const res = await fetch(url, { credentials: "include" });
+        const res  = await fetch(url, { credentials: "include" });
         const text = await res.text();
         let json;
         try {

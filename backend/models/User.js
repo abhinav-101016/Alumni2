@@ -127,7 +127,8 @@ const userSchema = new mongoose.Schema(
     academic: {
       rollNumber: {
         type: String,
-        sparse: true, // allows null for admin; still unique for students/alumni
+       // allows null for admin; still unique for students/alumni
+       sparse: true,
         trim: true,
         index: true,
       },

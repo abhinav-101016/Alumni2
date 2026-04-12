@@ -211,7 +211,7 @@ export function BlogForm({ existing = null }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       setMessage(`✅ Blog ${existing ? "updated" : "created"} successfully`);
-      if (!existing) setTimeout(() => router.push("/admin/blogs"), 1200);
+      if (!existing) setTimeout(() => router.push("/dashboard"), 1200);
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -332,7 +332,7 @@ export function EventForm({ existing = null }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       setMessage(`✅ Event ${existing ? "updated" : "created"} successfully`);
-      if (!existing) setTimeout(() => router.push("/admin/events"), 1200);
+      if (!existing) setTimeout(() => router.push("/dashboard"), 1200);
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -464,7 +464,7 @@ export function NewsForm({ existing = null }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       setMessage(`✅ News ${existing ? "updated" : "published"} successfully`);
-      if (!existing) setTimeout(() => router.push("/admin/news"), 1200);
+      if (!existing) setTimeout(() => router.push("/dashboard"), 1200);
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
