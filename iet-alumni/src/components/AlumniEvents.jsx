@@ -96,20 +96,25 @@ const AlumniEvents = () => {
                   : "Virtual Event"
                 : event.location || "Venue TBD";
 
+              const eventHref = `/events/${event._id}`;
+
               return (
                 <div
                   key={event._id}
                   className="flex flex-col md:flex-row gap-8 items-stretch group"
                 >
-                  {/* DATE BOX */}
-                  <div className="flex-shrink-0 w-24 h-32 md:w-32 md:h-40 border-2 border-slate-900 flex flex-col items-center justify-center bg-white transition-all duration-300 group-hover:border-[#951114]">
+                  {/* DATE BOX — clicking it also navigates to event detail */}
+                  <a
+                    href={eventHref}
+                    className="flex-shrink-0 w-24 h-32 md:w-32 md:h-40 border-2 border-slate-900 flex flex-col items-center justify-center bg-white transition-all duration-300 group-hover:border-[#951114]"
+                  >
                     <span className="text-sm font-bold text-slate-900 uppercase tracking-[0.2em] mb-1">
                       {month}
                     </span>
                     <span className="text-4xl md:text-6xl font-black text-[#951114] tracking-tighter">
                       {day}
                     </span>
-                  </div>
+                  </a>
 
                   {/* EVENT DETAILS */}
                   <div className="flex flex-col justify-between flex-grow py-1">
@@ -117,9 +122,14 @@ const AlumniEvents = () => {
                       <p className="text-sm md:text-base font-bold text-slate-500 uppercase tracking-widest">
                         {timeStr}
                       </p>
-                      <h3 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight group-hover:text-[#951114] transition-colors">
-                        {event.title}
-                      </h3>
+
+                      {/* CLICKABLE TITLE → /events/[slug or id] */}
+                      <a href={eventHref} className="block group/title">
+                        <h3 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight group-hover:text-[#951114] group-hover/title:text-[#951114] transition-colors">
+                          {event.title}
+                        </h3>
+                      </a>
+
                       <p className="text-base md:text-lg text-slate-600 font-medium italic">
                         {locationStr}
                       </p>

@@ -7,11 +7,10 @@ import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import {
   Menu, X, ChevronDown, ArrowRight,
-  Plus, Minus, User, LogOut, ShieldCheck
+  Plus, Minus, User, LogOut,
 } from "lucide-react"
 import "@fontsource/playfair-display/700.css"
 import { ChatContext } from "@/context/ChatContext"
-
 
 function useSafeChat() {
   const ctx = useContext(ChatContext)
@@ -64,7 +63,6 @@ export default function Header() {
     return () => window.removeEventListener("authChange", checkAuth)
   }, [])
 
-  // ── Close everything on route change ──
   useEffect(() => {
     setOpen(false)
     setActive(null)
@@ -93,7 +91,6 @@ export default function Header() {
 
   const isAdmin = userRole === "admin"
 
-  // ── Scroll to a section on the home page ──
   const scrollToSection = (sectionId) => {
     setOpen(false)
     setActive(null)
@@ -105,7 +102,6 @@ export default function Header() {
     }
   }
 
-  // ── Admin nav guard ──
   const handleAdminNav = (path) => {
     setActive(null)
     setOpen(false)
@@ -154,28 +150,22 @@ export default function Header() {
     return "/"
   }
 
-  const clickableItems = ["Featured Alumni", "Executive Committee", "Advisory Committee"]
-
-  const sectionMap = {
-    Events:            "events",
-    Blogs:             "blogs",
-    News:              "news",
-    "Upcoming Events": "events",
-    "Latest Posts":    "blogs",
-    "Announcements":   "news",
-  }
-
-  const getRoute = (link) => {
-    if (link === "Featured Alumni")     return "/connect/featured-alumni"
-    if (link === "Executive Committee") return "/committee/executive-committee"
-    if (link === "Advisory Committee")  return "/committee/advisory-committee"
-    return "/"
+  // ── Links that go to dedicated full listing pages ──────────────────────
+  // These use <Link> (hard navigation), not scroll-to-section
+  const PAGE_ROUTE_MAP = {
+    "Upcoming Events": "/events",
+    "Latest Posts":    "/blogs",
+    "Announcements":   "/news",
+    "Featured Alumni":        "/connect/featured-alumni",
+    "Executive Committee":    "/committee/executive-committee",
+    "Advisory Committee":     "/committee/advisory-committee",
   }
 
   const isLightMode = open || (hoverNav && active !== null)
 
-  // ── Shared link renderer ──
+  // ── Shared link renderer ───────────────────────────────────────────────
   const renderLink = (link, item, isMobile = false) => {
+    // Admin-only create actions
     if (adminCreateLinks.includes(link)) {
       return (
         <button
@@ -190,10 +180,11 @@ export default function Header() {
       )
     }
 
-    if (clickableItems.includes(link)) {
+    // Links with dedicated page routes — navigate directly
+    if (PAGE_ROUTE_MAP[link]) {
       return (
         <Link
-          href={getRoute(link)}
+          href={PAGE_ROUTE_MAP[link]}
           className={isMobile
             ? "hover:text-blue-500 transition-colors flex items-center gap-2"
             : "text-gray-700 hover:text-[#951114] flex items-center gap-2"
@@ -204,9 +195,10 @@ export default function Header() {
       )
     }
 
+    // Fallback: scroll-to-section on home page
     return (
       <button
-        onClick={() => scrollToSection(sectionMap[link] || sectionMap[item])}
+        onClick={() => scrollToSection(item.toLowerCase())}
         className={isMobile
           ? "hover:text-blue-500 transition-colors text-left"
           : "text-gray-700 hover:text-[#951114]"
@@ -285,7 +277,6 @@ export default function Header() {
             <ul className="hidden lg:flex gap-6 xl:gap-8 transition-all duration-500 items-center">
               {newNavItems.map((item, i) => {
 
-                // ── Chat slot: logout / login button ──
                 if (item === "Chat") {
                   return (
                     <li key={i} className="flex items-center gap-3">
@@ -308,7 +299,6 @@ export default function Header() {
                   )
                 }
 
-                // ── Committees / Events / Blogs / News ──
                 return (
                   <li
                     key={i}

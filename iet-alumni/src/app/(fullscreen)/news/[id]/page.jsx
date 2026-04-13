@@ -25,9 +25,9 @@ const proseStyles = `
   .prose-news h2 { font-size: 1.875rem; }
   .prose-news h3 { font-size: 1.5rem; }
   .prose-news p  { margin-bottom: 1.5rem; color: #1e293b !important; }
-  .prose-news a  { color: #2563eb; text-decoration: underline; text-underline-offset: 3px; }
+  .prose-news a  { color: #951114; text-decoration: underline; text-underline-offset: 3px; }
   .prose-news blockquote {
-    border-left: 4px solid #2563eb;
+    border-left: 4px solid #951114;
     padding-left: 1.5rem;
     margin: 2rem 0;
     font-style: italic;
@@ -87,10 +87,18 @@ const NewsDetailPage = () => {
   );
 
   if (error) return (
-    <div style={{ minHeight: "100vh", background: "#ffffff" }} className="flex flex-col items-center justify-center gap-4">
+    <div style={{ minHeight: "100vh", background: "#d8d3d3" }} className="flex flex-col items-center justify-center gap-4">
       <Newspaper size={40} className="text-slate-300" />
       <p className="text-slate-500 text-lg">{error}</p>
-      <button onClick={() => router.back()} className="text-blue-600 font-bold underline underline-offset-4">Go Back</button>
+      <button
+        onClick={() => router.back()}
+        className="font-bold underline underline-offset-4 transition-colors"
+        style={{ color: "#951114" }}
+        onMouseEnter={e => (e.currentTarget.style.color = "#7a0d0f")}
+        onMouseLeave={e => (e.currentTarget.style.color = "#951114")}
+      >
+        Go Back
+      </button>
     </div>
   );
 
@@ -102,22 +110,42 @@ const NewsDetailPage = () => {
       {/* Plain <style> tag — works in App Router unlike styled-jsx */}
       <style dangerouslySetInnerHTML={{ __html: proseStyles }} />
 
-      {/* DARK HERO — intentionally dark, uses inline styles so globals can't bleed in */}
-      <div className="relative overflow-hidden" style={{ background: "#020617" }}>
+      {/* LIGHT HERO */}
+      <div className="relative overflow-hidden" style={{ background: "#f8fafc" }}>
         {news.image?.url && (
           <div className="absolute inset-0">
-            <Image src={news.image.url} alt={news.image.altText || news.title} fill className="object-cover opacity-20" />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(2,6,23,0.6), rgba(2,6,23,0.85), #020617)" }} />
+            <Image
+              src={news.image.url}
+              alt={news.image.altText || news.title}
+              fill
+              className="object-cover opacity-80"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(to bottom, rgba(248,250,252,0.15), rgba(248,250,252,0.55), #f8fafc)",
+              }}
+            />
           </div>
         )}
 
         {/* Nav */}
         <div className="relative z-10 max-w-4xl mx-auto px-6 pt-8 pb-4 flex items-center justify-between">
-          <button onClick={() => router.back()} className="inline-flex items-center gap-2 group transition-colors" style={{ color: "#94a3b8" }}>
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 group transition-colors"
+            style={{ color: "#475569" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "#951114")}
+            onMouseLeave={e => (e.currentTarget.style.color = "#475569")}
+          >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             <span className="text-xs font-bold uppercase tracking-widest">Back</span>
           </button>
-          <span style={{ fontFamily: "Playfair Display, serif", color: "#64748b" }} className="text-sm font-bold tracking-wide hidden md:block">
+          <span
+            style={{ fontFamily: "Playfair Display, serif", color: "#334155" }}
+            className="text-sm font-bold tracking-wide hidden md:block"
+          >
             IET Alumni — News
           </span>
         </div>
@@ -126,23 +154,29 @@ const NewsDetailPage = () => {
         <div className="relative z-10 max-w-4xl mx-auto px-6 pt-12 pb-20">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             {news.category && (
-              <span className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 mb-6" style={{ border: "1px solid #60a5fa", color: "#60a5fa" }}>
+              <span
+                className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 mb-6"
+                style={{ border: "1px solid #951114", color: "#951114" }}
+              >
                 {news.category}
               </span>
             )}
-            <h1 style={{ fontFamily: "Playfair Display, serif", color: "#ffffff" }} className="text-4xl md:text-6xl font-black leading-[1.05] tracking-tight mb-8 max-w-3xl">
+            <h1
+              style={{ fontFamily: "Playfair Display, serif", color: "#0f172a" }}
+              className="text-4xl md:text-6xl font-black leading-[1.05] tracking-tight mb-8 max-w-3xl"
+            >
               {news.title}
             </h1>
             <div className="flex flex-wrap items-center gap-6">
-              <div className="flex items-center gap-2" style={{ color: "#94a3b8" }}>
+              <div className="flex items-center gap-2" style={{ color: "#475569" }}>
                 <User size={13} />
                 <span className="text-xs font-bold uppercase tracking-widest">{news.createdByName || "IET Alumni"}</span>
               </div>
-              <div className="flex items-center gap-2" style={{ color: "#94a3b8" }}>
+              <div className="flex items-center gap-2" style={{ color: "#475569" }}>
                 <Calendar size={13} />
                 <span className="text-xs font-bold uppercase tracking-widest">{formatDate(news.createdAt)}</span>
               </div>
-              <div className="flex items-center gap-2" style={{ color: "#94a3b8" }}>
+              <div className="flex items-center gap-2" style={{ color: "#475569" }}>
                 <Clock size={13} />
                 <span className="text-xs font-bold uppercase tracking-widest">{estimateReadTime(news.content)}</span>
               </div>
@@ -151,13 +185,18 @@ const NewsDetailPage = () => {
         </div>
       </div>
 
-      {/* ARTICLE BODY — explicit white background via inline style */}
+      {/* ARTICLE BODY */}
       <article className="max-w-4xl mx-auto px-6 py-16" style={{ background: "#ffffff", color: "#1e293b" }}>
 
         {news.excerpt && (
           <motion.p
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
-            style={{ fontFamily: "Playfair Display, serif", color: "#475569", borderLeft: "4px solid #2563eb", paddingLeft: "1.5rem" }}
+            style={{
+              fontFamily: "Playfair Display, serif",
+              color: "#475569",
+              borderLeft: "4px solid #951114",
+              paddingLeft: "1.5rem",
+            }}
             className="text-xl md:text-2xl italic leading-relaxed mb-12"
           >
             {news.excerpt}
@@ -167,22 +206,41 @@ const NewsDetailPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
           className="prose-news"
-          style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontSize: "1.125rem", lineHeight: "1.9", color: "#1e293b", background: "transparent" }}
+          style={{
+            fontFamily: "'Georgia', 'Times New Roman', serif",
+            fontSize: "1.125rem",
+            lineHeight: "1.9",
+            color: "#1e293b",
+            background: "transparent",
+          }}
           dangerouslySetInnerHTML={{ __html: news.content }}
         />
 
-        <div className="mt-20 pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4" style={{ borderTop: "1px solid #e2e8f0" }}>
+        {/* Footer row */}
+        <div
+          className="mt-20 pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+          style={{ borderTop: "1px solid #e2e8f0" }}
+        >
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#94a3b8" }}>Published by</p>
-            <p className="text-base font-bold" style={{ color: "#0f172a" }}>{news.createdByName || "IET Alumni Network"}</p>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#94a3b8" }}>
+              Published by
+            </p>
+            <p className="text-base font-bold" style={{ color: "#0f172a" }}>
+              {news.createdByName || "IET Alumni Network"}
+            </p>
             {news.lastEditedAt && (
-              <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Last updated: {formatDate(news.lastEditedAt)}</p>
+              <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                Last updated: {formatDate(news.lastEditedAt)}
+              </p>
             )}
           </div>
+
           <button
             onClick={() => router.push("/news")}
-            className="inline-flex items-center gap-2 px-6 py-3 text-xs font-black uppercase tracking-widest transition-all duration-300 hover:bg-[#951114]"
-            style={{ background: "#020617", color: "#ffffff" }}
+            className="inline-flex items-center gap-2 px-6 py-3 text-xs font-black uppercase tracking-widest transition-all duration-300"
+            style={{ background: "#951114", color: "#ffffff" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#7a0d0f")}
+            onMouseLeave={e => (e.currentTarget.style.background = "#951114")}
           >
             <ArrowLeft size={13} /> All News
           </button>

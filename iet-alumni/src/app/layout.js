@@ -18,9 +18,9 @@ export default async function RootLayout({ children }) {
     <html lang="en">
       <body className={`${inter.className} ${playfair.variable}`}>
         <ChatProvider>
-          <Header />
+        {/* <Header />*/}
           {children}
-          <Footer />
+        {/* <Footer />*/}
           <ScrollToTop />
           <ChatSidebar />
         </ChatProvider>
