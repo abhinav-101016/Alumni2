@@ -1,11 +1,11 @@
-{/*"use client";
+/*"use client";
 export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
+*/
 export default function VerifyEmail() {
-  const router = useRouter();
+ /* const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -74,9 +74,10 @@ export default function VerifyEmail() {
     } finally {
       setLoading(false);
     }
-  };
+  };*/
 
   return (
+    /*
     <main className="min-h-screen flex flex-col items-center justify-center bg-white px-4 py-12">
       <div className="w-full sm:w-96 md:w-80 lg:w-96 bg-white border border-slate-200 shadow-sm rounded-sm p-8">
         <h2 className="text-2xl font-black text-black uppercase tracking-tighter text-center mb-4">
@@ -127,5 +128,7 @@ export default function VerifyEmail() {
         </div>
       </div>
     </main>
+    */
+   <></>
   );
-}*/}
+}
