@@ -7,11 +7,13 @@ import AlumniEvents from '@/components/AlumniEvents';
 import NewsSection from '@/components/NewsSection';
 import BlogsSection from '@/components/BlogsSection';
 import RegisterCTA from '@/components/RegisterCTA';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function Home() {
   return (
     <main>
-      
+     
       <Hero />
       {/*<Campaign/>
       {/*<BulletinCarousel/>
@@ -22,6 +24,7 @@ export default function Home() {
      
       <NewsSection/>
        <RegisterCTA/>
+      
       {/* Other sections like News or Events can go here */}
     </main>
   );

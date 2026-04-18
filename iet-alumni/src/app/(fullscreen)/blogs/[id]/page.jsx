@@ -83,20 +83,21 @@ const BlogDetailPage = () => {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#fafaf8] flex items-center justify-center">
-      <div className="space-y-4 w-full max-w-2xl px-6 animate-pulse">
-        <div className="h-3 bg-slate-200 rounded w-1/4" />
-        <div className="h-10 bg-slate-200 rounded w-full" />
-        <div className="h-10 bg-slate-200 rounded w-3/4" />
-        <div className="h-64 bg-slate-200 rounded mt-8" />
-        <div className="space-y-3 mt-8">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-4 bg-slate-100 rounded" style={{ width: `${80 + Math.random() * 20}%` }} />
-          ))}
-        </div>
+  <div className="min-h-screen bg-[#fafaf8] flex items-center justify-center">
+    <div className="space-y-4 w-full max-w-2xl px-6 animate-pulse">
+      <div className="h-3 bg-slate-200 rounded w-1/4" />
+      <div className="h-10 bg-slate-200 rounded w-full" />
+      <div className="h-10 bg-slate-200 rounded w-3/4" />
+      <div className="h-64 bg-slate-200 rounded mt-8" />
+      <div className="space-y-3 mt-8">
+        {/* ✅ Fixed — stable widths, no Math.random() */}
+        {["w-4/5", "w-11/12", "w-3/4", "w-5/6", "w-10/12", "w-4/6"].map((w, i) => (
+          <div key={i} className={`h-4 bg-slate-100 rounded ${w}`} />
+        ))}
       </div>
     </div>
-  );
+  </div>
+);
 
   if (error) return (
     <div className="min-h-screen bg-[#fafaf8] flex flex-col items-center justify-center gap-4">

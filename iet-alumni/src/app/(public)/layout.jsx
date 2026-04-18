@@ -1,6 +1,8 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import Footer from "@/components/Footer"
+import Header from "@/components/Header"
 
 // Only these pages should redirect logged-in users away
 const AUTH_ONLY_PAGES = ["/login", "/signup", "/verify-email", "/forgot-password"]
@@ -51,5 +53,5 @@ export default function AuthLayout({ children }) {
     )
   }
 
-  return <>{children}</>
+  return <><Header/>{children}<Footer/></>
 }
