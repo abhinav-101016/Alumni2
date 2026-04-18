@@ -1,4 +1,4 @@
-{/*"use client";
+/*"use client";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,9 +59,10 @@ const InputField = ({ label, name, type = "text", options = null, value, onChang
       <p className="text-[10px] text-[#951114] font-bold ml-1 uppercase tracking-wide">{error}</p>
     )}
   </div>
-);
+);*/
 
 export default function SignUp() {
+  /*
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -156,10 +157,11 @@ export default function SignUp() {
     } finally {
       setLoading(false);
     }
-  };
+  };*/
 
   return (
-    <main className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
+    <></>
+    /*<main className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
       <div className="w-full lg:w-1/2 bg-white border border-slate-200 shadow-sm overflow-hidden rounded-sm">
 
         {/* Header 
@@ -251,6 +253,8 @@ export default function SignUp() {
         Verified • IET Lucknow
       </p>
     </main>
-  );
+    */
+  )
 }
-  */}
+
+ 
