@@ -1,4 +1,4 @@
-{/*"use client";
+/*"use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
@@ -17,8 +17,10 @@ const InputField = ({ label, name, value, onChange, type = "text" }) => (
     />
   </div>
 );
+*/
 
 export default function CompleteProfile() {
+/*
   const router = useRouter();
   const [authLoading, setAuthLoading] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -165,8 +167,10 @@ export default function CompleteProfile() {
       <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-[#951114]"></div>
     </div>
   );
+  */
 
-  return (
+  return (<></>
+  /*
     <main className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
       <Script 
         src="https://upload-widget.cloudinary.com/latest/global/all.js" 
@@ -293,7 +297,7 @@ export default function CompleteProfile() {
         </form>
       </div>
       <p className="mt-8 text-[9px] text-slate-400 font-bold uppercase tracking-[0.4em]">Verified • IET Lucknow</p>
-    </main>
+    </main>*/
   );
 }
-  */}
+  
