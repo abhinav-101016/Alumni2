@@ -36,6 +36,31 @@ const buildHistoryEntry = (admin, oldDoc, changedFields, note) => {
   }
 }
 
+// ─── Auto-compute event status from dates ────────────────────────────────────
+//  upcoming  → event hasn't started yet
+//  ongoing   → event is currently happening
+//  expired   → event has ended
+const computeEventStatus = (startDate, endDate) => {
+  const now   = new Date()
+  const start = new Date(startDate)
+
+  // If no endDate provided, treat the full start day as the event window
+  const end = endDate ? new Date(endDate) : new Date(startDate)
+  end.setHours(23, 59, 59, 999)
+
+  if (now < start)              return "upcoming"
+  if (now >= start && now <= end) return "ongoing"
+  return "expired"
+}
+
+// ─── Recompute status on a list of event plain objects ───────────────────────
+const withLiveStatus = (events) =>
+  events.map((ev) => {
+    const obj    = ev.toObject ? ev.toObject() : { ...ev }
+    obj.status   = computeEventStatus(obj.startDate, obj.endDate)
+    return obj
+  })
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  BLOG
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -45,6 +70,9 @@ export const createBlog = async (req, res) => {
   try {
     const { title, excerpt, content, category, tags, status } = req.body
     const admin = req.user
+
+    // Only allow draft or published — reject anything else
+    const safeStatus = ["draft", "published"].includes(status) ? status : "draft"
 
     let image = {}
     if (req.file) {
@@ -57,8 +85,8 @@ export const createBlog = async (req, res) => {
       excerpt,
       content,
       category,
-      tags: tags ? JSON.parse(tags) : [],
-      status: status || "draft",
+      tags:           tags ? JSON.parse(tags) : [],
+      status:         safeStatus,
       image,
       createdBy:      admin.id,
       createdByName:  admin.name || admin.email,
@@ -77,15 +105,20 @@ export const updateBlog = async (req, res) => {
     const { title, excerpt, content, category, tags, status, note } = req.body
     const admin = req.user
 
+    // Only allow draft or published
+    const safeStatus = status
+      ? ["draft", "published"].includes(status) ? status : undefined
+      : undefined
+
     const blog = await Blog.findById(req.params.id)
     if (!blog) return res.status(404).json({ success: false, message: "Blog not found" })
 
     const changedFields = []
-    if (title    && title    !== blog.title)    changedFields.push("title")
-    if (excerpt  && excerpt  !== blog.excerpt)  changedFields.push("excerpt")
-    if (content  && content  !== blog.content)  changedFields.push("content")
-    if (category && category !== blog.category) changedFields.push("category")
-    if (status   && status   !== blog.status)   changedFields.push("status")
+    if (title      && title      !== blog.title)      changedFields.push("title")
+    if (excerpt    && excerpt    !== blog.excerpt)    changedFields.push("excerpt")
+    if (content    && content    !== blog.content)    changedFields.push("content")
+    if (category   && category   !== blog.category)   changedFields.push("category")
+    if (safeStatus && safeStatus !== blog.status)     changedFields.push("status")
 
     if (req.file) {
       if (blog.image?.publicId) await cloudinary.uploader.destroy(blog.image.publicId)
@@ -98,12 +131,12 @@ export const updateBlog = async (req, res) => {
       blog.editHistory.push(buildHistoryEntry(admin, blog, changedFields, note))
     }
 
-    if (title)    blog.title    = title
-    if (excerpt)  blog.excerpt  = excerpt
-    if (content)  blog.content  = content
-    if (category) blog.category = category
-    if (tags)     blog.tags     = JSON.parse(tags)
-    if (status)   blog.status   = status
+    if (title)      blog.title      = title
+    if (excerpt)    blog.excerpt    = excerpt
+    if (content)    blog.content    = content
+    if (category)   blog.category   = category
+    if (tags)       blog.tags       = JSON.parse(tags)
+    if (safeStatus) blog.status     = safeStatus
 
     blog.lastEditedBy     = admin.id
     blog.lastEditedByName = admin.name || admin.email
@@ -157,14 +190,16 @@ export const getBlogAdmin = async (req, res) => {
 
 // POST /api/admin/events
 export const createEvent = async (req, res) => {
-  console.log("req.user →", req.user) 
   try {
     const {
       title, description, startDate, endDate, startTime, endTime,
       location, isVirtual, virtualUrl, registrationUrl,
-      registrationDeadline, maxAttendees, status
+      registrationDeadline, maxAttendees,
     } = req.body
     const admin = req.user
+
+    // Status is never accepted from the client — always derived from dates
+    const status = computeEventStatus(startDate, endDate)
 
     let image = {}
     if (req.file) {
@@ -176,7 +211,7 @@ export const createEvent = async (req, res) => {
       title, description, startDate, endDate, startTime, endTime,
       location, isVirtual: isVirtual === "true", virtualUrl,
       registrationUrl, registrationDeadline, maxAttendees,
-      status: status || "upcoming",
+      status,   // ← computed, never from req.body
       image,
       createdBy:      admin.id,
       createdByName:  admin.name || admin.email,
@@ -195,7 +230,8 @@ export const updateEvent = async (req, res) => {
     const {
       title, description, startDate, endDate, startTime, endTime,
       location, isVirtual, virtualUrl, registrationUrl,
-      registrationDeadline, maxAttendees, status, note
+      registrationDeadline, maxAttendees, note,
+      // status is intentionally destructured away so it's never applied
     } = req.body
     const admin = req.user
 
@@ -210,7 +246,6 @@ export const updateEvent = async (req, res) => {
     if (endDate     && String(endDate)   !== String(event.endDate))   changedFields.push("endDate")
     if (startTime   && startTime   !== event.startTime)   changedFields.push("startTime")
     if (endTime     && endTime     !== event.endTime)     changedFields.push("endTime")
-    if (status      && status      !== event.status)      changedFields.push("status")
 
     if (req.file) {
       if (event.image?.publicId) await cloudinary.uploader.destroy(event.image.publicId)
@@ -231,11 +266,15 @@ export const updateEvent = async (req, res) => {
     if (startTime)   event.startTime   = startTime
     if (endTime)     event.endTime     = endTime
     if (virtualUrl)  event.virtualUrl  = virtualUrl
-    if (registrationUrl) event.registrationUrl = registrationUrl
+    if (registrationUrl)      event.registrationUrl      = registrationUrl
     if (registrationDeadline) event.registrationDeadline = registrationDeadline
-    if (maxAttendees) event.maxAttendees = maxAttendees
+    if (maxAttendees)         event.maxAttendees          = maxAttendees
     if (isVirtual !== undefined) event.isVirtual = isVirtual === "true"
-    if (status)      event.status      = status
+
+    // Always recompute status from the (possibly updated) dates — never trust client
+    const resolvedStart = startDate || event.startDate
+    const resolvedEnd   = endDate   || event.endDate
+    event.status = computeEventStatus(resolvedStart, resolvedEnd)
 
     event.lastEditedBy     = admin.id
     event.lastEditedByName = admin.name || admin.email
@@ -262,9 +301,11 @@ export const deleteEvent = async (req, res) => {
 }
 
 // GET /api/admin/events
+// Status is recomputed live on every read — never stale
 export const getAllEventsAdmin = async (req, res) => {
   try {
-    const events = await Event.find().sort({ startDate: -1 }).select("-editHistory")
+    const raw    = await Event.find().sort({ startDate: -1 }).select("-editHistory")
+    const events = withLiveStatus(raw)
     res.json({ success: true, events })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
@@ -274,8 +315,13 @@ export const getAllEventsAdmin = async (req, res) => {
 // GET /api/admin/events/:id
 export const getEventAdmin = async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id)
-    if (!event) return res.status(404).json({ success: false, message: "Event not found" })
+    const raw = await Event.findById(req.params.id)
+    if (!raw) return res.status(404).json({ success: false, message: "Event not found" })
+
+    // Recompute status live for single-event fetch too
+    const event        = raw.toObject()
+    event.status       = computeEventStatus(event.startDate, event.endDate)
+
     res.json({ success: true, event })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
@@ -292,6 +338,9 @@ export const createNews = async (req, res) => {
     const { title, excerpt, content, category, status } = req.body
     const admin = req.user
 
+    // Only allow draft or published
+    const safeStatus = ["draft", "published"].includes(status) ? status : "draft"
+
     let image = {}
     if (req.file) {
       const result = await uploadToCloudinary(req.file.buffer, "iet-alumni/news")
@@ -300,7 +349,7 @@ export const createNews = async (req, res) => {
 
     const news = await News.create({
       title, excerpt, content, category,
-      status: status || "draft",
+      status: safeStatus,
       image,
       createdBy:      admin.id,
       createdByName:  admin.name || admin.email,
@@ -319,15 +368,20 @@ export const updateNews = async (req, res) => {
     const { title, excerpt, content, category, status, note } = req.body
     const admin = req.user
 
+    // Only allow draft or published
+    const safeStatus = status
+      ? ["draft", "published"].includes(status) ? status : undefined
+      : undefined
+
     const news = await News.findById(req.params.id)
     if (!news) return res.status(404).json({ success: false, message: "News not found" })
 
     const changedFields = []
-    if (title    && title    !== news.title)    changedFields.push("title")
-    if (excerpt  && excerpt  !== news.excerpt)  changedFields.push("excerpt")
-    if (content  && content  !== news.content)  changedFields.push("content")
-    if (category && category !== news.category) changedFields.push("category")
-    if (status   && status   !== news.status)   changedFields.push("status")
+    if (title      && title      !== news.title)      changedFields.push("title")
+    if (excerpt    && excerpt    !== news.excerpt)    changedFields.push("excerpt")
+    if (content    && content    !== news.content)    changedFields.push("content")
+    if (category   && category   !== news.category)   changedFields.push("category")
+    if (safeStatus && safeStatus !== news.status)     changedFields.push("status")
 
     if (req.file) {
       if (news.image?.publicId) await cloudinary.uploader.destroy(news.image.publicId)
@@ -340,11 +394,11 @@ export const updateNews = async (req, res) => {
       news.editHistory.push(buildHistoryEntry(admin, news, changedFields, note))
     }
 
-    if (title)    news.title    = title
-    if (excerpt)  news.excerpt  = excerpt
-    if (content)  news.content  = content
-    if (category) news.category = category
-    if (status)   news.status   = status
+    if (title)      news.title      = title
+    if (excerpt)    news.excerpt    = excerpt
+    if (content)    news.content    = content
+    if (category)   news.category   = category
+    if (safeStatus) news.status     = safeStatus
 
     news.lastEditedBy     = admin.id
     news.lastEditedByName = admin.name || admin.email

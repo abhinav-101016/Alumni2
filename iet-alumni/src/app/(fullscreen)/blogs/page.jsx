@@ -9,13 +9,12 @@ import "@fontsource/playfair-display/700.css";
 const STATUS_STYLES = {
   published: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500" },
   draft:     { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   dot: "bg-amber-400"  },
-  archived:  { bg: "bg-slate-50",   text: "text-slate-500",   border: "border-slate-200",   dot: "bg-slate-400"  },
 };
 
 // Guests only see published content
 const PUBLIC_STATUSES    = ["published"];
 // Logged-in users can filter by all statuses
-const LOGGED_IN_FILTERS  = ["all", "published", "draft", "archived"];
+const LOGGED_IN_FILTERS  = ["all", "published", "draft"];
 const PUBLIC_FILTERS     = ["all"];  // guests only have one effective view
 
 const SkeletonRow = () => (

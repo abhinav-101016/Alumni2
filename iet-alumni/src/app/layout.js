@@ -1,9 +1,11 @@
 import { Inter, Playfair_Display } from "next/font/google";
+import { cookies } from "next/headers";
 import "./globals.css";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 import { ChatProvider } from "@/context/ChatContext";
 import ChatSidebar from "@/components/chat/ChatSidebar";
-import ScrollToTop from "@/components/ScrollToTop";
-
 
 const inter = Inter({ subsets: ["latin"] });
 const playfair = Playfair_Display({ 
@@ -11,20 +13,14 @@ const playfair = Playfair_Display({
   variable: '--font-playfair' 
 });
 
-export const metadata = {
-  title: "IETLAA",
-  description: "Alumni Platform",
-  icons: {
-    icon: "/logo2.png",
-  },
-};
-
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${inter.className} ${playfair.variable}`}>
         <ChatProvider>
+        {/* <Header />*/}
           {children}
+        {/* <Footer />*/}
           <ScrollToTop />
           <ChatSidebar />
         </ChatProvider>

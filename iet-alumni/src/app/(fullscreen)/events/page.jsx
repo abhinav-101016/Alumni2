@@ -12,12 +12,10 @@ const STATUS_STYLES = {
   upcoming:  { bg: "bg-emerald-50",  text: "text-emerald-700",  border: "border-emerald-200",  dot: "bg-emerald-500"  },
   active:    { bg: "bg-blue-50",     text: "text-blue-700",     border: "border-blue-200",     dot: "bg-blue-500"     },
   past:      { bg: "bg-slate-50",    text: "text-slate-500",    border: "border-slate-200",    dot: "bg-slate-400"    },
-  cancelled: { bg: "bg-red-50",      text: "text-red-700",      border: "border-red-200",      dot: "bg-red-500"      },
 };
-
 // Guests only see these statuses
-const PUBLIC_STATUSES  = ["upcoming", "active", "past", "cancelled"];
-const ALL_FILTERS      = ["all", "upcoming", "active", "past", "cancelled"];
+const PUBLIC_STATUSES  = ["upcoming", "active", "past"];
+const ALL_FILTERS      = ["all", "upcoming", "active", "past"];
 
 const SkeletonRow = () => (
   <div className="flex gap-6 md:gap-10 items-stretch animate-pulse border-b border-slate-100 pb-10">

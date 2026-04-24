@@ -223,17 +223,17 @@ const TAB_CFG = {
 const CONTENT_STATUS_CFG = {
   draft:     { label: "Draft",     bg: "#f1f5f9", border: "#cbd5e1", color: "#475569" },
   published: { label: "Published", bg: "#dcfce7", border: "#86efac", color: "#15803d" },
-  archived:  { label: "Archived",  bg: "#f3f4f6", border: "#d1d5db", color: "#6b7280" },
+ 
   upcoming:  { label: "Upcoming",  bg: "#eff6ff", border: "#93c5fd", color: "#1d4ed8" },
   ongoing:   { label: "Ongoing",   bg: "#dcfce7", border: "#86efac", color: "#15803d" },
   completed: { label: "Completed", bg: "#f1f5f9", border: "#cbd5e1", color: "#475569" },
-  cancelled: { label: "Cancelled", bg: RED_LIGHT, border: RED_BORDER, color: RED_DARK },
+ 
 };
 
 const STATUS_OPTS = {
-  blogs:  ["", "draft", "published", "archived"],
-  events: ["", "upcoming", "ongoing", "completed", "cancelled"],
-  news:   ["", "draft", "published", "archived"],
+  blogs:  ["", "draft", "published"],
+  events: ["", "upcoming", "ongoing", "completed"],
+  news:   ["", "draft", "published"],
 };
 
 function ContentStatusPill({ status }) {

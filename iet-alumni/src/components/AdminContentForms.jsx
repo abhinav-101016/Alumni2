@@ -28,8 +28,8 @@ function useAdminGuard() {
 // ─── Shared ENUMS ─────────────────────────────────────────────────────────────
 const BLOG_CATEGORIES  = ["Alumni Stories", "Campus Life", "Industry Insights", "Mentorship", "Announcements", "Other"];
 const NEWS_CATEGORIES  = ["Announcement", "Achievement", "Event", "Research", "Industry", "General"];
-const CONTENT_STATUSES = ["draft", "published", "archived"];
-const EVENT_STATUSES   =["upcoming", "ongoing", "completed", "cancelled"];
+const CONTENT_STATUSES = ["draft", "published"];
+
 
 // ─── Shared UI Components ─────────────────────────────────────────────────────
 
@@ -388,15 +388,12 @@ export function EventForm({ existing = null }) {
           </div>
         </section>
 
-        <section>
-          <SectionLabel number="04" label="Status & Media" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5">
-            <Field label="Status" name="status" options={EVENT_STATUSES} value={form.status} onChange={handleChange} />
-            <div />
-            <ImageUpload value={imageFile} onChange={setImageFile} error={errors.image} />
-          </div>
-        </section>
-
+     <section>
+  <SectionLabel number="04" label="Media" />
+  <div className="grid grid-cols-1 gap-y-5">
+    <ImageUpload value={imageFile} onChange={setImageFile} error={errors.image} />
+  </div>
+</section>
         {existing && (
           <section>
             <SectionLabel number="05" label="Edit Note" />
