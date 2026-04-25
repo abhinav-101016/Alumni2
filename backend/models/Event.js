@@ -1,6 +1,16 @@
 // 📁 src/models/Event.js
 import mongoose from "mongoose";
 
+// ── Image sub-schema ────────────────────────────────────────────────────────
+const ImageSchema = new mongoose.Schema(
+  {
+    url:      { type: String },
+    publicId: { type: String },
+    altText:  { type: String, trim: true },
+  },
+  { _id: false }
+);
+
 // ── Edit history entry ──────────────────────────────────────────────────────
 const EditHistorySchema = new mongoose.Schema(
   {
@@ -15,7 +25,8 @@ const EditHistorySchema = new mongoose.Schema(
       endDate:     { type: Date },
       startTime:   { type: String },
       endTime:     { type: String },
-      image:       { type: String },
+      image:       { type: String },   // previous cover URL snapshot
+      images:      { type: [String] }, // previous gallery URL snapshots
       status:      { type: String },
     },
     note: { type: String, trim: true },
@@ -49,29 +60,26 @@ const EventSchema = new mongoose.Schema(
       type: Date,
       required: [true, "Event start date is required"],
     },
-    endDate: {
-      type: Date,
-    },
-    startTime: { type: String, trim: true }, // e.g. "11:00am IST"
-    endTime:   { type: String, trim: true }, // e.g. "2:00pm IST"
+    endDate:   { type: Date },
+    startTime: { type: String, trim: true },
+    endTime:   { type: String, trim: true },
 
     // ── Location ──
     location: {
-  type: String,
-  trim: true,
-  required: function() {
-    return !this.isVirtual  // only required if not virtual
-  },
-},
-    isVirtual:  { type: Boolean, default: false },
-    virtualUrl: { type: String, trim: true }, // Zoom/Meet link if virtual
-
-    // ── Image ──
-    image: {
-      url:      { type: String },
-      publicId: { type: String },
-      altText:  { type: String, trim: true },
+      type: String,
+      trim: true,
+      required: function () {
+        return !this.isVirtual;
+      },
     },
+    isVirtual:  { type: Boolean, default: false },
+    virtualUrl: { type: String, trim: true },
+
+    // ── Images ──
+    // `image`  → cover image (always images[0]); kept for backward compatibility
+    // `images` → full ordered gallery including the cover
+    image:  { type: ImageSchema, default: () => ({}) },
+    images: { type: [ImageSchema], default: [] },
 
     // ── Registration ──
     registrationUrl:      { type: String, trim: true },
@@ -98,9 +106,7 @@ const EventSchema = new mongoose.Schema(
     // ── Full edit history (admin-visible) ──
     editHistory: [EditHistorySchema],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 // ── Auto-generate slug ──────────────────────────────────────────────────────

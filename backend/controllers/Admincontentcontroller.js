@@ -19,12 +19,33 @@ const uploadToCloudinary = (buffer, folder) => {
   })
 }
 
+// ─── Upload all files from req.files["images"] to a Cloudinary folder ────────
+// Returns an array of { url, publicId, altText } objects.
+const uploadManyToCloudinary = async (files, folder, altText = "") => {
+  if (!files || files.length === 0) return []
+  const results = await Promise.all(
+    files.map(f => uploadToCloudinary(f.buffer, folder))
+  )
+  return results.map(r => ({
+    url:       r.secure_url,
+    publicId:  r.public_id,
+    altText,
+  }))
+}
+
+// ─── Delete a list of Cloudinary publicIds (fire-and-forget safe) ─────────────
+const destroyMany = (publicIds) =>
+  Promise.all(publicIds.map(id => cloudinary.uploader.destroy(id).catch(() => {})))
+
 // ─── helper: build editHistory entry ─────────────────────────────────────────
 const buildHistoryEntry = (admin, oldDoc, changedFields, note) => {
   const changes = {}
   changedFields.forEach((field) => {
-    if (oldDoc[field] !== undefined) {
-      changes[field] = field === "image" ? oldDoc.image?.url : oldDoc[field]
+    if (field === "images") {
+      // Store the previous image URLs for the history record
+      changes.images = (oldDoc.images || []).map(img => img.url)
+    } else if (oldDoc[field] !== undefined) {
+      changes[field] = oldDoc[field]
     }
   })
   return {
@@ -37,18 +58,12 @@ const buildHistoryEntry = (admin, oldDoc, changedFields, note) => {
 }
 
 // ─── Auto-compute event status from dates ────────────────────────────────────
-//  upcoming  → event hasn't started yet
-//  ongoing   → event is currently happening
-//  expired   → event has ended
 const computeEventStatus = (startDate, endDate) => {
   const now   = new Date()
   const start = new Date(startDate)
-
-  // If no endDate provided, treat the full start day as the event window
   const end = endDate ? new Date(endDate) : new Date(startDate)
   end.setHours(23, 59, 59, 999)
-
-  if (now < start)              return "upcoming"
+  if (now < start)                return "upcoming"
   if (now >= start && now <= end) return "ongoing"
   return "expired"
 }
@@ -56,8 +71,8 @@ const computeEventStatus = (startDate, endDate) => {
 // ─── Recompute status on a list of event plain objects ───────────────────────
 const withLiveStatus = (events) =>
   events.map((ev) => {
-    const obj    = ev.toObject ? ev.toObject() : { ...ev }
-    obj.status   = computeEventStatus(obj.startDate, obj.endDate)
+    const obj  = ev.toObject ? ev.toObject() : { ...ev }
+    obj.status = computeEventStatus(obj.startDate, obj.endDate)
     return obj
   })
 
@@ -71,23 +86,21 @@ export const createBlog = async (req, res) => {
     const { title, excerpt, content, category, tags, status } = req.body
     const admin = req.user
 
-    // Only allow draft or published — reject anything else
     const safeStatus = ["draft", "published"].includes(status) ? status : "draft"
 
-    let image = {}
-    if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer, "iet-alumni/blogs")
-      image = { url: result.secure_url, publicId: result.public_id, altText: title }
-    }
+    // Upload all provided images; first one is the cover
+    const images = await uploadManyToCloudinary(
+      req.files?.images ?? [],
+      "iet-alumni/blogs",
+      title
+    )
 
     const blog = await Blog.create({
-      title,
-      excerpt,
-      content,
-      category,
+      title, excerpt, content, category,
       tags:           tags ? JSON.parse(tags) : [],
       status:         safeStatus,
-      image,
+      images,                                    // ← array
+      image:          images[0] ?? {},           // ← backward-compat cover field
       createdBy:      admin.id,
       createdByName:  admin.name || admin.email,
       createdByEmail: admin.email,
@@ -102,10 +115,9 @@ export const createBlog = async (req, res) => {
 // PUT /api/admin/blogs/:id
 export const updateBlog = async (req, res) => {
   try {
-    const { title, excerpt, content, category, tags, status, note } = req.body
+    const { title, excerpt, content, category, tags, status, note, removeImages } = req.body
     const admin = req.user
 
-    // Only allow draft or published
     const safeStatus = status
       ? ["draft", "published"].includes(status) ? status : undefined
       : undefined
@@ -120,11 +132,31 @@ export const updateBlog = async (req, res) => {
     if (category   && category   !== blog.category)   changedFields.push("category")
     if (safeStatus && safeStatus !== blog.status)     changedFields.push("status")
 
-    if (req.file) {
-      if (blog.image?.publicId) await cloudinary.uploader.destroy(blog.image.publicId)
-      const result = await uploadToCloudinary(req.file.buffer, "iet-alumni/blogs")
-      changedFields.push("image")
-      blog.image = { url: result.secure_url, publicId: result.public_id, altText: title || blog.title }
+    // ── Remove images the editor explicitly deleted ──────────────────────────
+    if (removeImages) {
+      const ids = JSON.parse(removeImages)            // array of publicIds
+      if (ids.length > 0) {
+        changedFields.push("images")
+        await destroyMany(ids)
+        blog.images = (blog.images || []).filter(img => !ids.includes(img.publicId))
+      }
+    }
+
+    // ── Upload new images and append them ────────────────────────────────────
+    const newFiles = req.files?.images ?? []
+    if (newFiles.length > 0) {
+      if (!changedFields.includes("images")) changedFields.push("images")
+      const uploaded = await uploadManyToCloudinary(
+        newFiles,
+        "iet-alumni/blogs",
+        title || blog.title
+      )
+      blog.images = [...(blog.images || []), ...uploaded]
+    }
+
+    // Keep backward-compat cover field in sync with first image
+    if (blog.images?.length > 0) {
+      blog.image = blog.images[0]
     }
 
     if (changedFields.length > 0) {
@@ -154,8 +186,7 @@ export const deleteBlog = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id)
     if (!blog) return res.status(404).json({ success: false, message: "Blog not found" })
-
-    if (blog.image?.publicId) await cloudinary.uploader.destroy(blog.image.publicId)
+    await destroyMany((blog.images || []).map(img => img.publicId).filter(Boolean))
     await blog.deleteOne()
     res.json({ success: true, message: "Blog deleted" })
   } catch (err) {
@@ -198,21 +229,21 @@ export const createEvent = async (req, res) => {
     } = req.body
     const admin = req.user
 
-    // Status is never accepted from the client — always derived from dates
     const status = computeEventStatus(startDate, endDate)
 
-    let image = {}
-    if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer, "iet-alumni/events")
-      image = { url: result.secure_url, publicId: result.public_id, altText: title }
-    }
+    const images = await uploadManyToCloudinary(
+      req.files?.images ?? [],
+      "iet-alumni/events",
+      title
+    )
 
     const event = await Event.create({
       title, description, startDate, endDate, startTime, endTime,
       location, isVirtual: isVirtual === "true", virtualUrl,
       registrationUrl, registrationDeadline, maxAttendees,
-      status,   // ← computed, never from req.body
-      image,
+      status,
+      images,
+      image: images[0] ?? {},
       createdBy:      admin.id,
       createdByName:  admin.name || admin.email,
       createdByEmail: admin.email,
@@ -230,8 +261,7 @@ export const updateEvent = async (req, res) => {
     const {
       title, description, startDate, endDate, startTime, endTime,
       location, isVirtual, virtualUrl, registrationUrl,
-      registrationDeadline, maxAttendees, note,
-      // status is intentionally destructured away so it's never applied
+      registrationDeadline, maxAttendees, note, removeImages,
     } = req.body
     const admin = req.user
 
@@ -247,11 +277,28 @@ export const updateEvent = async (req, res) => {
     if (startTime   && startTime   !== event.startTime)   changedFields.push("startTime")
     if (endTime     && endTime     !== event.endTime)     changedFields.push("endTime")
 
-    if (req.file) {
-      if (event.image?.publicId) await cloudinary.uploader.destroy(event.image.publicId)
-      const result = await uploadToCloudinary(req.file.buffer, "iet-alumni/events")
-      changedFields.push("image")
-      event.image = { url: result.secure_url, publicId: result.public_id, altText: title || event.title }
+    if (removeImages) {
+      const ids = JSON.parse(removeImages)
+      if (ids.length > 0) {
+        changedFields.push("images")
+        await destroyMany(ids)
+        event.images = (event.images || []).filter(img => !ids.includes(img.publicId))
+      }
+    }
+
+    const newFiles = req.files?.images ?? []
+    if (newFiles.length > 0) {
+      if (!changedFields.includes("images")) changedFields.push("images")
+      const uploaded = await uploadManyToCloudinary(
+        newFiles,
+        "iet-alumni/events",
+        title || event.title
+      )
+      event.images = [...(event.images || []), ...uploaded]
+    }
+
+    if (event.images?.length > 0) {
+      event.image = event.images[0]
     }
 
     if (changedFields.length > 0) {
@@ -271,7 +318,6 @@ export const updateEvent = async (req, res) => {
     if (maxAttendees)         event.maxAttendees          = maxAttendees
     if (isVirtual !== undefined) event.isVirtual = isVirtual === "true"
 
-    // Always recompute status from the (possibly updated) dates — never trust client
     const resolvedStart = startDate || event.startDate
     const resolvedEnd   = endDate   || event.endDate
     event.status = computeEventStatus(resolvedStart, resolvedEnd)
@@ -292,7 +338,7 @@ export const deleteEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id)
     if (!event) return res.status(404).json({ success: false, message: "Event not found" })
-    if (event.image?.publicId) await cloudinary.uploader.destroy(event.image.publicId)
+    await destroyMany((event.images || []).map(img => img.publicId).filter(Boolean))
     await event.deleteOne()
     res.json({ success: true, message: "Event deleted" })
   } catch (err) {
@@ -301,7 +347,6 @@ export const deleteEvent = async (req, res) => {
 }
 
 // GET /api/admin/events
-// Status is recomputed live on every read — never stale
 export const getAllEventsAdmin = async (req, res) => {
   try {
     const raw    = await Event.find().sort({ startDate: -1 }).select("-editHistory")
@@ -317,11 +362,8 @@ export const getEventAdmin = async (req, res) => {
   try {
     const raw = await Event.findById(req.params.id)
     if (!raw) return res.status(404).json({ success: false, message: "Event not found" })
-
-    // Recompute status live for single-event fetch too
-    const event        = raw.toObject()
-    event.status       = computeEventStatus(event.startDate, event.endDate)
-
+    const event  = raw.toObject()
+    event.status = computeEventStatus(event.startDate, event.endDate)
     res.json({ success: true, event })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
@@ -338,19 +380,19 @@ export const createNews = async (req, res) => {
     const { title, excerpt, content, category, status } = req.body
     const admin = req.user
 
-    // Only allow draft or published
     const safeStatus = ["draft", "published"].includes(status) ? status : "draft"
 
-    let image = {}
-    if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer, "iet-alumni/news")
-      image = { url: result.secure_url, publicId: result.public_id, altText: title }
-    }
+    const images = await uploadManyToCloudinary(
+      req.files?.images ?? [],
+      "iet-alumni/news",
+      title
+    )
 
     const news = await News.create({
       title, excerpt, content, category,
       status: safeStatus,
-      image,
+      images,
+      image: images[0] ?? {},
       createdBy:      admin.id,
       createdByName:  admin.name || admin.email,
       createdByEmail: admin.email,
@@ -365,10 +407,9 @@ export const createNews = async (req, res) => {
 // PUT /api/admin/news/:id
 export const updateNews = async (req, res) => {
   try {
-    const { title, excerpt, content, category, status, note } = req.body
+    const { title, excerpt, content, category, status, note, removeImages } = req.body
     const admin = req.user
 
-    // Only allow draft or published
     const safeStatus = status
       ? ["draft", "published"].includes(status) ? status : undefined
       : undefined
@@ -383,11 +424,28 @@ export const updateNews = async (req, res) => {
     if (category   && category   !== news.category)   changedFields.push("category")
     if (safeStatus && safeStatus !== news.status)     changedFields.push("status")
 
-    if (req.file) {
-      if (news.image?.publicId) await cloudinary.uploader.destroy(news.image.publicId)
-      const result = await uploadToCloudinary(req.file.buffer, "iet-alumni/news")
-      changedFields.push("image")
-      news.image = { url: result.secure_url, publicId: result.public_id, altText: title || news.title }
+    if (removeImages) {
+      const ids = JSON.parse(removeImages)
+      if (ids.length > 0) {
+        changedFields.push("images")
+        await destroyMany(ids)
+        news.images = (news.images || []).filter(img => !ids.includes(img.publicId))
+      }
+    }
+
+    const newFiles = req.files?.images ?? []
+    if (newFiles.length > 0) {
+      if (!changedFields.includes("images")) changedFields.push("images")
+      const uploaded = await uploadManyToCloudinary(
+        newFiles,
+        "iet-alumni/news",
+        title || news.title
+      )
+      news.images = [...(news.images || []), ...uploaded]
+    }
+
+    if (news.images?.length > 0) {
+      news.image = news.images[0]
     }
 
     if (changedFields.length > 0) {
@@ -416,7 +474,7 @@ export const deleteNews = async (req, res) => {
   try {
     const news = await News.findById(req.params.id)
     if (!news) return res.status(404).json({ success: false, message: "News not found" })
-    if (news.image?.publicId) await cloudinary.uploader.destroy(news.image.publicId)
+    await destroyMany((news.images || []).map(img => img.publicId).filter(Boolean))
     await news.deleteOne()
     res.json({ success: true, message: "News deleted" })
   } catch (err) {

@@ -1,6 +1,16 @@
 // 📁 src/models/News.js
 import mongoose from "mongoose";
 
+// ── Image sub-schema ────────────────────────────────────────────────────────
+const ImageSchema = new mongoose.Schema(
+  {
+    url:      { type: String },
+    publicId: { type: String },
+    altText:  { type: String, trim: true },
+  },
+  { _id: false }
+);
+
 // ── Edit history entry ──────────────────────────────────────────────────────
 const EditHistorySchema = new mongoose.Schema(
   {
@@ -12,7 +22,8 @@ const EditHistorySchema = new mongoose.Schema(
       content:  { type: String },
       excerpt:  { type: String },
       category: { type: String },
-      image:    { type: String },
+      image:    { type: String },   // previous cover URL snapshot
+      images:   { type: [String] }, // previous gallery URL snapshots
       status:   { type: String },
     },
     note: { type: String, trim: true },
@@ -51,12 +62,11 @@ const NewsSchema = new mongoose.Schema(
       default: "General",
     },
 
-    // ── Image ──
-    image: {
-      url:      { type: String },
-      publicId: { type: String },
-      altText:  { type: String, trim: true },
-    },
+    // ── Images ──
+    // `image`  → cover image (always images[0]); kept for backward compatibility
+    // `images` → full ordered gallery including the cover
+    image:  { type: ImageSchema, default: () => ({}) },
+    images: { type: [ImageSchema], default: [] },
 
     // ── Status ──
     status: {
@@ -79,9 +89,7 @@ const NewsSchema = new mongoose.Schema(
     // ── Full edit history (admin-visible) ──
     editHistory: [EditHistorySchema],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 // ── Auto-generate slug ──────────────────────────────────────────────────────
@@ -101,4 +109,5 @@ NewsSchema.pre("save", function (next) {
   }
   next();
 });
+
 export default mongoose.model("News", NewsSchema);

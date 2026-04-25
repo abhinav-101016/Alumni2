@@ -1,26 +1,32 @@
 // 📁 src/models/Blog.js
 import mongoose from "mongoose";
 
+// ── Image sub-schema (reused for single cover + gallery array) ──────────────
+const ImageSchema = new mongoose.Schema(
+  {
+    url:      { type: String },
+    publicId: { type: String },
+    altText:  { type: String, trim: true },
+  },
+  { _id: false }
+);
+
 // ── Edit history entry ──────────────────────────────────────────────────────
 const EditHistorySchema = new mongoose.Schema(
   {
-    editedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    editedByName: { type: String, required: true },  // snapshot — stays accurate even if user is deleted
+    editedBy:     { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    editedByName: { type: String, required: true },
     editedAt:     { type: Date, default: Date.now },
     changes: {
-      // stores the PREVIOUS values of whichever fields were changed
       title:    { type: String },
       content:  { type: String },
       excerpt:  { type: String },
       category: { type: String },
       tags:     { type: [String] },
-      image:    { type: String },
+      image:    { type: String },   // stores previous cover URL as a string snapshot
+      images:   { type: [String] }, // stores previous gallery URLs as string snapshots
     },
-    note: { type: String, trim: true }, // optional admin note like "Fixed typo" 
+    note: { type: String, trim: true },
   },
   { _id: true }
 );
@@ -57,12 +63,11 @@ const BlogSchema = new mongoose.Schema(
     },
     tags: [{ type: String, trim: true, lowercase: true }],
 
-    // ── Image ──
-    image: {
-      url:         { type: String },          // e.g. Cloudinary URL or /uploads/...
-      publicId:    { type: String },          // Cloudinary public_id for deletion
-      altText:     { type: String, trim: true },
-    },
+    // ── Images ──
+    // `image`  → cover image (always images[0]); kept for backward compatibility
+    // `images` → full ordered gallery including the cover
+    image:  { type: ImageSchema, default: () => ({}) },
+    images: { type: [ImageSchema], default: [] },
 
     // ── Status ──
     status: {
@@ -73,13 +78,9 @@ const BlogSchema = new mongoose.Schema(
     publishedAt: { type: Date },
 
     // ── Uploader / Author ──
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    createdByName:  { type: String, required: true },  // snapshot
-    createdByEmail: { type: String },                  // snapshot
+    createdBy:      { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    createdByName:  { type: String, required: true },
+    createdByEmail: { type: String },
 
     // ── Last editor snapshot ──
     lastEditedBy:     { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -89,12 +90,10 @@ const BlogSchema = new mongoose.Schema(
     // ── Full edit history (admin-visible) ──
     editHistory: [EditHistorySchema],
   },
-  {
-    timestamps: true, // adds createdAt + updatedAt automatically
-  }
+  { timestamps: true }
 );
 
-// ── Auto-generate slug from title before saving ─────────────────────────────
+// ── Auto-generate slug from title ───────────────────────────────────────────
 BlogSchema.pre("save", function (next) {
   if (this.isModified("title") || this.isNew) {
     this.slug =
@@ -106,7 +105,6 @@ BlogSchema.pre("save", function (next) {
       "-" +
       Date.now();
   }
-  // Set publishedAt when status changes to published
   if (this.isModified("status") && this.status === "published" && !this.publishedAt) {
     this.publishedAt = new Date();
   }
