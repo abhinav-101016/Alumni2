@@ -8,7 +8,9 @@ import {
   Twitter, Globe, AlertCircle, CalendarDays,
   BookOpen, Building2, ChevronRight, ChevronLeft,
   Newspaper, Trash2, AlertTriangle, X, RefreshCw,
+  Pencil, Send,                          // ← NEW: Edit + Publish icons
 } from "lucide-react";
+import { useRouter } from "next/navigation"; // ← NEW: for navigation
 
 // ─── Brand token ───────────────────────────────────────────────
 const RED       = "#951114";
@@ -223,11 +225,9 @@ const TAB_CFG = {
 const CONTENT_STATUS_CFG = {
   draft:     { label: "Draft",     bg: "#f1f5f9", border: "#cbd5e1", color: "#475569" },
   published: { label: "Published", bg: "#dcfce7", border: "#86efac", color: "#15803d" },
- 
   upcoming:  { label: "Upcoming",  bg: "#eff6ff", border: "#93c5fd", color: "#1d4ed8" },
   ongoing:   { label: "Ongoing",   bg: "#dcfce7", border: "#86efac", color: "#15803d" },
   completed: { label: "Completed", bg: "#f1f5f9", border: "#cbd5e1", color: "#475569" },
- 
 };
 
 const STATUS_OPTS = {
@@ -298,7 +298,61 @@ function ContentDeleteModal({ item, tab, onConfirm, onCancel, loading }) {
   );
 }
 
+// ─── NEW: Publish Confirm Modal ───────────────────────────────────────────────
+function PublishModal({ item, tab, onConfirm, onCancel, loading }) {
+  if (!item) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)" }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+        <div className="flex items-start gap-4 mb-5">
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "#f0fdf4", border: "1px solid #86efac" }}>
+            <Send size={18} style={{ color: "#15803d" }} />
+          </div>
+          <div>
+            <h3 className="font-black text-slate-900 text-lg">Publish {tab.slice(0, -1)}?</h3>
+            <p className="text-slate-500 text-sm mt-1">This will make it visible to everyone.</p>
+          </div>
+          <button onClick={onCancel} className="ml-auto text-slate-400 hover:text-slate-600 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-6">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Title</p>
+          <p className="text-sm font-semibold text-slate-800 line-clamp-2">{item.title}</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            style={{ background: "#16a34a" }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "#15803d"; }}
+            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = "#16a34a"; }}
+          >
+            {loading
+              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : <Send size={14} />}
+            {loading ? "Publishing…" : "Publish Now"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminContentSection({ adminId }) {
+  const router = useRouter(); // ← NEW
+
   const [tab, setTab]               = useState("blogs");
   const [page, setPage]             = useState(1);
   const [status, setStatus]         = useState("");
@@ -307,8 +361,10 @@ function AdminContentSection({ adminId }) {
   const [pagination, setPagination] = useState({});
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget]   = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [publishTarget, setPublishTarget] = useState(null); // ← NEW
+  const [publishLoading, setPublishLoading] = useState(false); // ← NEW
   const [toast, setToast]           = useState(null);
 
   const fetchContent = useCallback(async () => {
@@ -349,12 +405,43 @@ function AdminContentSection({ adminId }) {
     finally { setDeleteLoading(false); }
   };
 
+  // ─── NEW: quick-publish handler ───────────────────────────────
+  const handlePublishConfirm = async () => {
+    if (!publishTarget) return;
+    setPublishLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("status", "published");
+
+      const res  = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/${tab}/${publishTarget._id}`,
+        { method: "PUT", credentials: "include", body: fd }
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+
+      // Update the item status locally — no full refetch needed
+      setItems(prev =>
+        prev.map(it =>
+          it._id === publishTarget._id ? { ...it, status: "published" } : it
+        )
+      );
+      setPublishTarget(null);
+      showToast("Published successfully", "success");
+    } catch (e) { showToast(e.message, "error"); }
+    finally { setPublishLoading(false); }
+  };
+  // ─────────────────────────────────────────────────────────────
+
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
 
   const cfg = TAB_CFG[tab];
+
+  // Edit route map — events don't have draft/publish but we still allow editing
+  const editRoute = (id) => `/admin/${tab}/${id}/edit`;
 
   return (
     <>
@@ -475,10 +562,17 @@ function AdminContentSection({ adminId }) {
           ) : (
             <div className="divide-y divide-slate-100">
               {items.map((item) => {
-                const href = `/${tab}/${item._id}`;
+                const href    = `/${tab}/${item._id}`;
                 const isOwner = String(item.createdBy) === String(adminId);
+                // Draft check — only blogs and news have draft/published
+                const isDraft = (tab === "blogs" || tab === "news") && item.status === "draft";
+
                 return (
-                  <div key={item._id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-slate-50 transition-colors group">
+                  <div
+                    key={item._id}
+                    className="flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50 transition-colors group"
+                  >
+                    {/* Clickable content area */}
                     <a href={href} className="flex items-center gap-4 flex-1 min-w-0">
                       <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 border border-slate-200">
                         {item.image?.url
@@ -490,41 +584,93 @@ function AdminContentSection({ adminId }) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                          <p
-                            className="text-sm font-bold text-slate-900 truncate transition-colors"
-                            style={{ "--hover-color": RED }}
-                          >
-                            {item.title}
-                          </p>
+                          <p className="text-sm font-bold text-slate-900 truncate">{item.title}</p>
                           <ContentStatusPill status={item.status} />
                         </div>
                         <div className="flex flex-wrap gap-x-3 text-[11px] text-slate-400">
                           <span>By <span className="font-semibold text-slate-600">{item.createdByName}</span></span>
                           <span>{fmt(item.createdAt)}</span>
-                          {item.category && <span className="text-slate-500 font-semibold">{item.category}</span>}
+                          {item.category  && <span className="text-slate-500 font-semibold">{item.category}</span>}
                           {item.startDate && <span>{fmt(item.startDate)}</span>}
-                          {item.location && <span>{item.location}</span>}
+                          {item.location  && <span>{item.location}</span>}
                         </div>
                       </div>
                     </a>
+
+                    {/* ── Action buttons (visible on row hover, owner only) ── */}
                     {isOwner && (
-                      <button
-                        onClick={(e) => { e.preventDefault(); setDeleteTarget(item); }}
-                        className="w-8 h-8 rounded-lg border flex items-center justify-center opacity-0 group-hover:opacity-100 flex-shrink-0 transition-all"
-                        style={{ background: RED_LIGHT, borderColor: RED_BORDER, color: RED }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.background = RED;
-                          e.currentTarget.style.color = "white";
-                          e.currentTarget.style.borderColor = RED;
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.background = RED_LIGHT;
-                          e.currentTarget.style.color = RED;
-                          e.currentTarget.style.borderColor = RED_BORDER;
-                        }}
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
+
+                        {/* PUBLISH button — only for draft blogs / news */}
+                        {isDraft && (
+                          <button
+                            title="Publish"
+                            onClick={(e) => { e.preventDefault(); setPublishTarget(item); }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all"
+                            style={{
+                              background: "#f0fdf4",
+                              borderColor: "#86efac",
+                              color: "#15803d",
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.background = "#16a34a";
+                              e.currentTarget.style.color = "white";
+                              e.currentTarget.style.borderColor = "#16a34a";
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.background = "#f0fdf4";
+                              e.currentTarget.style.color = "#15803d";
+                              e.currentTarget.style.borderColor = "#86efac";
+                            }}
+                          >
+                            <Send size={11} /> Publish
+                          </button>
+                        )}
+
+                        {/* EDIT button — always visible for owner */}
+                        <button
+                          title="Edit"
+                          onClick={(e) => { e.preventDefault(); router.push(editRoute(item._id)); }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all"
+                          style={{
+                            background: "#eff6ff",
+                            borderColor: "#93c5fd",
+                            color: "#1d4ed8",
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = "#2563eb";
+                            e.currentTarget.style.color = "white";
+                            e.currentTarget.style.borderColor = "#2563eb";
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = "#eff6ff";
+                            e.currentTarget.style.color = "#1d4ed8";
+                            e.currentTarget.style.borderColor = "#93c5fd";
+                          }}
+                        >
+                          <Pencil size={11} /> Edit
+                        </button>
+
+                        {/* DELETE button */}
+                        <button
+                          title="Delete"
+                          onClick={(e) => { e.preventDefault(); setDeleteTarget(item); }}
+                          className="w-8 h-8 rounded-lg border flex items-center justify-center transition-all"
+                          style={{ background: RED_LIGHT, borderColor: RED_BORDER, color: RED }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = RED;
+                            e.currentTarget.style.color = "white";
+                            e.currentTarget.style.borderColor = RED;
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = RED_LIGHT;
+                            e.currentTarget.style.color = RED;
+                            e.currentTarget.style.borderColor = RED_BORDER;
+                          }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
@@ -577,6 +723,15 @@ function AdminContentSection({ adminId }) {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
         loading={deleteLoading}
+      />
+
+      {/* Publish modal — NEW */}
+      <PublishModal
+        item={publishTarget}
+        tab={tab}
+        onConfirm={handlePublishConfirm}
+        onCancel={() => setPublishTarget(null)}
+        loading={publishLoading}
       />
 
       {/* Toast */}

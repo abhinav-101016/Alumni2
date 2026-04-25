@@ -9,17 +9,17 @@ function useAdminGuard() {
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/status`, {
-      credentials: "include", // ← uses cookie, no localStorage
+      credentials: "include",
     })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(data => {
         if (data.user?.role === "admin") {
           setAllowed(true);
         } else {
-          router.replace("/dashboard"); // logged in but not admin
+          router.replace("/dashboard");
         }
       })
-      .catch(() => router.replace("/login")); // not logged in
+      .catch(() => router.replace("/login"));
   }, []);
 
   return allowed;
@@ -168,7 +168,8 @@ export function BlogForm({ existing = null }) {
   const [form, setForm] = useState({
     title: "", excerpt: "", content: "",
     category: "", tags: "", status: "draft", note: "",
-    ...existing
+    ...existing,
+    tags: Array.isArray(existing?.tags) ? existing.tags.join(", ") : (existing?.tags ?? ""), // ✅ normalize array → string
   });
 
   const handleChange = (e) => {
@@ -194,9 +195,8 @@ export function BlogForm({ existing = null }) {
     setLoading(true); setMessage("");
 
     try {
-      // ✅ No token - cookie is sent automatically via credentials: "include"
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => v && fd.append(k, k === "tags" ? JSON.stringify(v.split(",").map(t => t.trim()).filter(Boolean)) : v));
+      Object.entries(form).forEach(([k, v]) => v && fd.append(k, k === "tags" ? JSON.stringify((Array.isArray(v) ? v : v.split(",")).map(t => t.trim()).filter(Boolean)) : v));
       if (imageFile) fd.append("image", imageFile);
 
       const url = existing
@@ -205,13 +205,13 @@ export function BlogForm({ existing = null }) {
 
       const res  = await fetch(url, {
         method: existing ? "PUT" : "POST",
-        credentials: "include", // ✅ sends cookie instead of Bearer token
+        credentials: "include",
         body: fd,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       setMessage(`✅ Blog ${existing ? "updated" : "created"} successfully`);
-      if (!existing) setTimeout(() => router.push("/dashboard"), 1200);
+      setTimeout(() => router.push("/dashboard"), 1200); // ✅ redirect for both create and edit
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -280,19 +280,53 @@ export function EventForm({ existing = null }) {
   const [errors, setErrors]       = useState({});
   const [imageFile, setImageFile] = useState(null);
 
-  const [form, setForm] = useState({
-    title: "", description: "",
-    startDate: "", endDate: "", startTime: "", endTime: "",
-    location: "", isVirtual: false, virtualUrl: "",
-    registrationUrl: "", registrationDeadline: "", maxAttendees: "",
-    status: "upcoming", note: "",
-    ...existing,
-    isVirtual: existing?.isVirtual ?? false,
+  const [form, setForm] = useState(() => {
+    const base = {
+      title: "", description: "",
+      startDate: "", endDate: "", startTime: "", endTime: "",
+      location: "", isVirtual: false, virtualUrl: "",
+      registrationUrl: "", registrationDeadline: "", maxAttendees: "",
+      status: "upcoming", note: "",
+      ...existing,
+      isVirtual: existing?.isVirtual ?? false,
+    };
+    // ✅ Re-derive status from stored dates on initial load
+    if (existing?.startDate) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const start = new Date(existing.startDate); start.setHours(0, 0, 0, 0);
+      const end   = existing.endDate ? new Date(existing.endDate) : null;
+      if (end) end.setHours(23, 59, 59, 999);
+      if (today < start)           base.status = "upcoming";
+      else if (today > (end ?? start)) base.status = "completed";
+      else                         base.status = "ongoing";
+    }
+    return base;
   });
+
+  // ─── Auto-derive event status from dates ────────────────────────────────
+  const deriveStatus = (startDate, endDate) => {
+    if (!startDate) return "upcoming";
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const start = new Date(startDate); start.setHours(0, 0, 0, 0);
+    const end   = endDate ? new Date(endDate) : null;
+    if (end) end.setHours(23, 59, 59, 999);
+    if (today < start) return "upcoming";
+    if (today > (end ?? start)) return "completed";
+    return "ongoing";
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(p => ({ ...p, [name]: type === "checkbox" ? checked : value }));
+    setForm(p => {
+      const updated = { ...p, [name]: type === "checkbox" ? checked : value };
+      if (name === "startDate" || name === "endDate") {
+        updated.status = deriveStatus(
+          name === "startDate" ? value : p.startDate,
+          name === "endDate"   ? value : p.endDate
+        );
+      }
+      return updated;
+    });
     if (errors[name]) setErrors(p => ({ ...p, [name]: "" }));
   };
 
@@ -313,7 +347,6 @@ export function EventForm({ existing = null }) {
     setLoading(true); setMessage("");
 
     try {
-      // ✅ No token - cookie is sent automatically via credentials: "include"
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => {
         if (v !== "" && v !== null && v !== undefined) fd.append(k, String(v));
@@ -326,13 +359,13 @@ export function EventForm({ existing = null }) {
 
       const res  = await fetch(url, {
         method: existing ? "PUT" : "POST",
-        credentials: "include", // ✅ sends cookie instead of Bearer token
+        credentials: "include",
         body: fd,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       setMessage(`✅ Event ${existing ? "updated" : "created"} successfully`);
-      if (!existing) setTimeout(() => router.push("/dashboard"), 1200);
+      setTimeout(() => router.push("/dashboard"), 1200); // ✅ redirect for both create and edit
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
@@ -363,6 +396,20 @@ export function EventForm({ existing = null }) {
             <Field label="End Time"   name="endTime"   type="time" value={form.endTime}   onChange={handleChange} />
             <Field label="Registration Deadline" name="registrationDeadline" type="date" value={form.registrationDeadline} onChange={handleChange} />
             <Field label="Max Attendees" name="maxAttendees" type="number" value={form.maxAttendees} onChange={handleChange} placeholder="Leave blank for unlimited" />
+            {/* ── Auto-derived status badge ── */}
+            {form.startDate && (
+              <div className="col-span-full px-2 flex items-center gap-3">
+                <span className="text-[10px] font-black uppercase tracking-widest text-black">Derived Status:</span>
+                <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest border ${
+                  form.status === "upcoming"  ? "bg-blue-50 border-blue-300 text-blue-700"   :
+                  form.status === "ongoing"   ? "bg-green-50 border-green-300 text-green-700" :
+                                               "bg-slate-100 border-slate-300 text-slate-500"
+                }`}>
+                  {form.status}
+                </span>
+                <span className="text-[9px] text-slate-400 uppercase tracking-wide">auto-calculated from dates</span>
+              </div>
+            )}
           </div>
         </section>
 
@@ -388,12 +435,13 @@ export function EventForm({ existing = null }) {
           </div>
         </section>
 
-     <section>
-  <SectionLabel number="04" label="Media" />
-  <div className="grid grid-cols-1 gap-y-5">
-    <ImageUpload value={imageFile} onChange={setImageFile} error={errors.image} />
-  </div>
-</section>
+        <section>
+          <SectionLabel number="04" label="Media" />
+          <div className="grid grid-cols-1 gap-y-5">
+            <ImageUpload value={imageFile} onChange={setImageFile} error={errors.image} />
+          </div>
+        </section>
+
         {existing && (
           <section>
             <SectionLabel number="05" label="Edit Note" />
@@ -444,7 +492,6 @@ export function NewsForm({ existing = null }) {
     setLoading(true); setMessage("");
 
     try {
-      // ✅ No token - cookie is sent automatically via credentials: "include"
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => v && fd.append(k, v));
       if (imageFile) fd.append("image", imageFile);
@@ -455,13 +502,13 @@ export function NewsForm({ existing = null }) {
 
       const res  = await fetch(url, {
         method: existing ? "PUT" : "POST",
-        credentials: "include", // ✅ sends cookie instead of Bearer token
+        credentials: "include",
         body: fd,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       setMessage(`✅ News ${existing ? "updated" : "published"} successfully`);
-      if (!existing) setTimeout(() => router.push("/dashboard"), 1200);
+      setTimeout(() => router.push("/dashboard"), 1200); // ✅ redirect for both create and edit
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {

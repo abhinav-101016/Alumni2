@@ -13,7 +13,7 @@ const STATUS_STYLES = {
 
 // Guests only see published content
 const PUBLIC_STATUSES   = ["published"];
-const LOGGED_IN_FILTERS = ["all", "published", "draft"];
+const LOGGED_IN_FILTERS = ["all"];
 
 const SkeletonRow = () => (
   <div className="flex gap-6 md:gap-10 items-start animate-pulse border-b border-slate-100 pb-10">

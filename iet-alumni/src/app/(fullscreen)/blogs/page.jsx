@@ -14,7 +14,7 @@ const STATUS_STYLES = {
 // Guests only see published content
 const PUBLIC_STATUSES    = ["published"];
 // Logged-in users can filter by all statuses
-const LOGGED_IN_FILTERS  = ["all", "published", "draft"];
+const LOGGED_IN_FILTERS  = ["all"];
 const PUBLIC_FILTERS     = ["all"];  // guests only have one effective view
 
 const SkeletonRow = () => (
