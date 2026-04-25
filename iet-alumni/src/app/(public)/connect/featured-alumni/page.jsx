@@ -10,7 +10,7 @@ const alumniSpotlights = [
     branch: "Computer Science & Engineering",
     role: "IAS Officer, Govt. of India",
     bio: "A pioneer for women in engineering at IET, she has served in various high-ranking administrative roles, contributing significantly to national policy and governance.",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800", // Representative image
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800",
   },
   {
     name: "Shuchi Sharma",
@@ -18,7 +18,7 @@ const alumniSpotlights = [
     branch: "Electronics & Communication",
     role: "Global Vice President, SAP",
     bio: "Leading digital transformation on a global scale, Shuchi represents the technical prowess and leadership excellence of IETians in the private sector.",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=800", // Representative image
+    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=800",
   }
 ];
 
@@ -28,12 +28,15 @@ const AlumnaeSpotlight = () => {
       {/* HEADER SECTION */}
       <section className="bg-[#951114] text-white py-20 px-6 md:px-24">
         <div className="max-w-6xl mx-auto">
+          <p className="text-sm font-black uppercase tracking-[0.3em] opacity-70 mb-4">
+            Legends of IET
+          </p>
           <h1 style={{ fontFamily: "Playfair Display" }} className="text-5xl md:text-7xl font-bold mb-6">
-            Alumnae Spotlight
+            Stories of Success
           </h1>
           <p className="text-xl md:text-2xl font-light max-w-3xl opacity-90">
-            Celebrating the extraordinary women of IET Lucknow who are leading industries, 
-            shaping policies, and inspiring the next generation of engineers.
+            Celebrating the outstanding alumni of IET Lucknow — graduates who are leading industries, 
+            shaping national policy, and inspiring every engineer who walks these halls.
           </p>
         </div>
       </section>
@@ -87,15 +90,15 @@ const AlumnaeSpotlight = () => {
         </div>
       </section>
 
-      {/* NOMINATION CTA */}
+      {/* ADD A NOMINATION CTA */}
       <section className="max-w-3xl mx-auto px-6 mt-24 text-center">
-        <h3 className="text-2xl font-bold text-slate-900 mb-4">Know an Alumna making waves?</h3>
+        <h3 className="text-2xl font-bold text-slate-900 mb-4">Know an alumnus making waves?</h3>
         <p className="text-slate-600 mb-8">
-          We are constantly looking to share stories of our graduates. Help us inspire the current 
-          students by nominating someone for the spotlight.
+          Every successful graduate has a story worth telling. Help us inspire the next generation of
+          engineers by adding a nomination for someone whose journey deserves to be celebrated.
         </p>
         <button className="text-[#951114] font-black uppercase tracking-[0.2em] border-b-2 border-[#951114] pb-1 hover:text-slate-900 hover:border-slate-900 transition-all">
-          Submit a Nomination
+          Add a Nomination
         </button>
       </section>
     </main>

@@ -131,11 +131,13 @@ export default function Header() {
     }
   }
 
-  const newNavItems = ["Committees", "Events", "Blogs", "News", "Chat"]
+  // "Alumni" is now a standalone nav link (no dropdown)
+  const newNavItems = ["Committees", "Featured Alumni", "Events", "Blogs", "News", "Chat"]
 
   const menuData = {
-    Committees: ["Executive Committee", "Advisory Committee"],
-    Events:     ["Featured Alumni", "Upcoming Events", "Post New Event"],
+    Committees:       ["Executive Committee", "Advisory Committee"],
+    "Featured Alumni": [], // standalone — handled via PAGE_ROUTE_MAP
+    Events:     ["Upcoming Events", "Post New Event"],
     Blogs:      ["Latest Posts", "Post New Blog"],
     News:       ["Announcements", "Post New Article"],
     Chat:       [],
@@ -151,11 +153,10 @@ export default function Header() {
   }
 
   // ── Links that go to dedicated full listing pages ──────────────────────
-  // These use <Link> (hard navigation), not scroll-to-section
   const PAGE_ROUTE_MAP = {
-    "Upcoming Events": "/events",
-    "Latest Posts":    "/blogs",
-    "Announcements":   "/news",
+    "Upcoming Events":        "/events",
+    "Latest Posts":           "/blogs",
+    "Announcements":          "/news",
     "Featured Alumni":        "/connect/featured-alumni",
     "Executive Committee":    "/committee/executive-committee",
     "Advisory Committee":     "/committee/advisory-committee",
@@ -277,6 +278,7 @@ export default function Header() {
             <ul className="hidden lg:flex gap-6 xl:gap-8 transition-all duration-500 items-center">
               {newNavItems.map((item, i) => {
 
+                // ── Login/Logout button slot ──
                 if (item === "Chat") {
                   return (
                     <li key={i} className="flex items-center gap-3">
@@ -299,6 +301,21 @@ export default function Header() {
                   )
                 }
 
+                // ── "Featured Alumni" — standalone direct link, no dropdown ──
+                if (item === "Featured Alumni") {
+                  return (
+                    <li key={i}>
+                      <Link
+                        href="/connect/featured-alumni"
+                        className={`cursor-pointer flex items-center gap-1 transition-all duration-300 font-bold uppercase tracking-wide ${scrolled ? "text-sm" : "text-base"} ${isLightMode ? "hover:text-blue-700" : "hover:text-gray-300"}`}
+                      >
+                        Featured Alumni
+                      </Link>
+                    </li>
+                  )
+                }
+
+                // ── All other nav items with dropdown ──
                 return (
                   <li
                     key={i}
@@ -364,29 +381,47 @@ export default function Header() {
             </div>
 
             {/* ── Mobile accordion ── */}
-            {newNavItems.filter(item => item !== "Chat").map((item, i) => (
-              <div key={i} className={`border-b ${isLightMode ? "border-gray-100" : "border-white/10"}`}>
-                <button
-                  onClick={() => setMobileOpen(mobileOpen === i ? null : i)}
-                  className="w-full flex justify-between items-center py-4 text-base font-bold uppercase"
-                >
-                  <span>{item}</span>
-                  {mobileOpen === i
-                    ? <Minus size={18} className="text-blue-500" />
-                    : <Plus  size={18} className="text-blue-500" />
-                  }
-                </button>
-                <div className={`overflow-hidden transition-all duration-300 ${mobileOpen === i ? "max-h-[400px] pb-4" : "max-h-0"}`}>
-                  <ul className="space-y-3 pl-4 border-l-2 border-blue-500/30 ml-1">
-                    {menuData[item]?.map((link, idx) => (
-                      <li key={idx} className={`text-sm font-medium ${isLightMode ? "text-gray-600" : "text-gray-200"}`}>
-                        {renderLink(link, item, true)}
-                      </li>
-                    ))}
-                  </ul>
+            {newNavItems.filter(item => item !== "Chat").map((item, i) => {
+
+              // "Featured Alumni" — simple direct link in mobile menu, no accordion
+              if (item === "Featured Alumni") {
+                return (
+                  <div key={i} className={`border-b ${isLightMode ? "border-gray-100" : "border-white/10"}`}>
+                    <Link
+                      href="/connect/featured-alumni"
+                      onClick={() => setOpen(false)}
+                      className="w-full flex justify-between items-center py-4 text-base font-bold uppercase"
+                    >
+                      Featured Alumni
+                    </Link>
+                  </div>
+                )
+              }
+
+              return (
+                <div key={i} className={`border-b ${isLightMode ? "border-gray-100" : "border-white/10"}`}>
+                  <button
+                    onClick={() => setMobileOpen(mobileOpen === i ? null : i)}
+                    className="w-full flex justify-between items-center py-4 text-base font-bold uppercase"
+                  >
+                    <span>{item}</span>
+                    {mobileOpen === i
+                      ? <Minus size={18} className="text-blue-500" />
+                      : <Plus  size={18} className="text-blue-500" />
+                    }
+                  </button>
+                  <div className={`overflow-hidden transition-all duration-300 ${mobileOpen === i ? "max-h-[400px] pb-4" : "max-h-0"}`}>
+                    <ul className="space-y-3 pl-4 border-l-2 border-blue-500/30 ml-1">
+                      {menuData[item]?.map((link, idx) => (
+                        <li key={idx} className={`text-sm font-medium ${isLightMode ? "text-gray-600" : "text-gray-200"}`}>
+                          {renderLink(link, item, true)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
           </div>
         </div>
@@ -394,6 +429,7 @@ export default function Header() {
         {/* ── Desktop Dropdown ── */}
         {active !== null && !open &&
           newNavItems[active] !== "Chat" &&
+          newNavItems[active] !== "Featured Alumni" &&
           menuData[newNavItems[active]]?.length > 0 && (
           <div className="absolute left-0 w-full bg-white text-black shadow-2xl border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="max-w-[1600px] mx-auto px-12 py-8">
