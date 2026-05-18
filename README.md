@@ -117,12 +117,12 @@ This project was developed during my internship at **Cognexon Solutions** as an 
 
 ## 📸 Future Improvements
 
-- Authentication & role-based access
+
 - Real-time notifications
 - Alumni networking/chat system
 - Admin dashboard analytics
 - Event reminders via email
-- Image uploads and media gallery
+- 
 
 ---
 
