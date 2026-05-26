@@ -1,7 +1,7 @@
 // 📁 src/components/Header.jsx
 "use client"
 
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect, useContext, useRef, useCallback } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
@@ -33,6 +33,11 @@ export default function Header() {
   const [hoverNav,      setHoverNav]      = useState(false)
   const [scrolled,      setScrolled]      = useState(false)
   const [mobileOpen,    setMobileOpen]    = useState(null)
+  
+  // Add refs to prevent race conditions
+  const scrollTimeoutRef = useRef(null)
+  const isScrollingRef = useRef(false)
+  const lastScrollYRef = useRef(0)
 
   const checkAuth = async () => {
     try {
@@ -70,24 +75,42 @@ export default function Header() {
     setHoverNav(false)
   }, [pathname])
 
+  // 🎯 COMPLETELY REWRITTEN: Stable scroll handler with no dependencies
   useEffect(() => {
     let ticking = false
+    let lastScrollY = 0
+    
     const handleScroll = () => {
       if (ticking) return
       ticking = true
+      
       requestAnimationFrame(() => {
-        const y = window.scrollY
-        setScrolled(prev => {
-          if (!prev && y > 60) return true
-          if (prev  && y < 30) return false
-          return prev
-        })
+        const currentScrollY = window.scrollY
+        const delta = Math.abs(currentScrollY - lastScrollY)
+        
+        // Only update if scroll position changed significantly (prevents micro-movements)
+        if (delta > 2) {
+          // Use different thresholds with larger gap (150px vs 50px)
+          if (currentScrollY > 150) {
+            setScrolled(true)
+          } else if (currentScrollY < 50) {
+            setScrolled(false)
+          }
+          // In the zone between 50-150px, maintain current state (hysteresis)
+          
+          lastScrollY = currentScrollY
+        }
+        
         ticking = false
       })
     }
+    
+    // Initial check
+    handleScroll()
+    
     window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+  }, []) // Empty dependency array - runs once only
 
   const isAdmin = userRole === "admin"
 
@@ -214,7 +237,15 @@ export default function Header() {
     <header className="sticky top-0 z-40 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]">
 
       {/* ── Top bar ── */}
-      <div className={`hidden md:block bg-white text-blue-600 text-[14px] transition-all duration-500 ease-in-out overflow-hidden ${scrolled ? "max-h-0 opacity-0" : "max-h-20 py-2 opacity-100"}`}>
+      {/* 🔧 UPDATED: Using transform scale instead of max-height for smoother animation */}
+      <div className={`
+        hidden md:block bg-white text-blue-600 text-[14px] overflow-hidden
+        transition-all duration-500 ease-in-out
+        ${scrolled 
+          ? "opacity-0 pointer-events-none translate-y-[-100%] max-h-0 py-0" 
+          : "opacity-100 pointer-events-auto translate-y-0 max-h-20 py-2"
+        }
+      `}>
         <div className="max-w-[1600px] mx-auto px-12 flex justify-end gap-6 font-bold uppercase tracking-widest items-center">
           {!isLoggedIn ? (
             <button onClick={handleLoginClick} className="hover:text-blue-900 transition-colors cursor-pointer text-[12px]">
