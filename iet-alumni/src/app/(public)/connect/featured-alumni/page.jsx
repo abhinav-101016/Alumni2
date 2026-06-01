@@ -1,79 +1,80 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Linkedin, ExternalLink, GraduationCap, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Linkedin, ExternalLink, GraduationCap, Search, ChevronLeft, ChevronRight, Star, Briefcase, Calendar, Award } from 'lucide-react';
 
-// Full alumni data from your list
+// Full alumni data with image mappings
 const allAlumniData = [
-  { id: 1, name: "Yatish Katheria", branch: "EC", passingYear: "1988", jobProfile: "DDG DoT" },
-  { id: 2, name: "Lallan Babu", branch: "EC", passingYear: "1988", jobProfile: "Govt Sector" },
-  { id: 3, name: "Dr. Anita Yadav", branch: "CS", passingYear: "1988", jobProfile: "Professor, Research Guide, Project guiden, subject expert in various selection committee of NITs, NSUT etc, Advisory committee in various International Conferences and various other technical committees" },
-  { id: 4, name: "Dr. Renu Lata Rajni", branch: "CS", passingYear: "1988", jobProfile: "Director, Destue Bank" },
-  { id: 5, name: "Pankaj Aswal", branch: "EC", passingYear: "1988", jobProfile: "Sr. Vice Chairman, Intel corp USA" },
-  { id: 6, name: "Prof. Sanjany Kumar Singh", branch: "", passingYear: "", jobProfile: "Professor IIM Lucknow" },
-  { id: 7, name: "Prof. D . K. Lobiyal", branch: "CS", passingYear: "1988", jobProfile: "Prof. in JNU" },
-  { id: 8, name: "Anil Gupta", branch: "ME", passingYear: "1989", jobProfile: "CGM ordinance Factory" },
-  { id: 9, name: "DC Gupta", branch: "EE", passingYear: "1988", jobProfile: "GM BHEL" },
-  { id: 10, name: "Ashish Kumar Shrivstav", branch: "EC", passingYear: "1988", jobProfile: "GM AAI" },
-  { id: 11, name: "Vivek Chandra Verma", branch: "ME", passingYear: "1989", jobProfile: "An Indian Ordnance Factory Officer of 1991 batch, under Ministry of Defence. Empanelled as Joint Secretary in Government of India. Presently working at UIDAI Headquarters, New Delhi." },
-  { id: 12, name: "Asif Siddiqui", branch: "EC", passingYear: "1990", jobProfile: "General Manager ISRO" },
-  { id: 13, name: "Manish Jain", branch: "Civil Engineering", passingYear: "1990", jobProfile: "1995 batch IAS Officer, West Bengal cadre, Principal Secretary, School Education" },
-  { id: 14, name: "Alok Katiyar", branch: "EC", passingYear: "1990", jobProfile: "Director, National High Speed Rail Corporation Ltd" },
-  { id: 15, name: "Navin Kumar", branch: "EE", passingYear: "1991", jobProfile: "Joint Secretary, Ministry of Railways" },
-  { id: 16, name: "Pradeep Mishra", branch: "CE", passingYear: "1991", jobProfile: "Founder and CMD of REPL, a company related with urban development and infrastructure consulting" },
-  { id: 17, name: "Dhananjay Singh", branch: "CE", passingYear: "1991", jobProfile: "JS in Ministry of Railways" },
-  { id: 18, name: "Dayapatra Nevatia", branch: "EE", passingYear: "1991", jobProfile: "President & Chief Operating Officer, Infogain" },
-  { id: 19, name: "Ram Naresh Singh", branch: "EC", passingYear: "1991", jobProfile: "Public Service" },
-  { id: 20, name: "Vikas Gupta", branch: "MR", passingYear: "1992", jobProfile: "In active Politics and a Minister" },
-  { id: 21, name: "Sharat Sinha", branch: "EC", passingYear: "1992", jobProfile: "CEO Airtel Business" },
-  { id: 22, name: "Dr Vinay Prakash", branch: "ME", passingYear: "1993", jobProfile: "Director at Adani Enterprises & ACC, CEO Adani Natural Resources" },
-  { id: 23, name: "Nitish Sinha", branch: "EC", passingYear: "1994", jobProfile: "Joint Secretary Level Officer in Government of India" },
-  { id: 24, name: "Samir Kumar", branch: "EC", passingYear: "1994", jobProfile: "CXO (Group Chief Shared Services officer) in QBE Insurance, the largest Australian and one of the largest in the world. Previously Managing Director in JP Morgan Chase bank and Deutsche bank in global roles." },
-  { id: 25, name: "Lokesh Singh", branch: "ME", passingYear: "1995", jobProfile: "General Manager, Centre for Railway Information Systems, Ministry of Railways" },
-  { id: 26, name: "Tej Pratap Narayan", branch: "EE", passingYear: "1998", jobProfile: "JS in Ministry of Railway" },
-  { id: 27, name: "Siddhartha Rungta", branch: "ME", passingYear: "1999", jobProfile: "Country Head HSBC" },
-  { id: 28, name: "Srijan Pal Singh", branch: "EE", passingYear: "2006", jobProfile: "Chairperson Dr. APJ Abdul Kalam Centre" },
-  { id: 29, name: "Laxmi Singh", branch: "", passingYear: "", jobProfile: "IPS" },
-  { id: 30, name: "Niharika Bhatt", branch: "E&T", passingYear: "2011", jobProfile: "IPS" },
-  { id: 31, name: "Bandana Sinha", branch: "CS", passingYear: "1989", jobProfile: "Global Delivery head, Business Analytics - Life science, healthcare and public services, TCS." },
-  { id: 32, name: "Avinash Kumar Singh", branch: "EE", passingYear: "2007", jobProfile: "IFS 2012, Presently in Nepal Embassy" },
-  { id: 33, name: "Roopal Saxena", branch: "CS", passingYear: "1988", jobProfile: "Vice President, Citizens Bank" },
-  { id: 34, name: "Bhaskar Srivastava", branch: "EE", passingYear: "1989", jobProfile: "CTO, Reliance JIO" },
-  { id: 35, name: "Upendra Singh", branch: "CS", passingYear: "1991", jobProfile: "Managing Director, Data Architecture at State Street" },
-  { id: 36, name: "Pooja Bhat", branch: "", passingYear: "2010", jobProfile: "Indian Defense Accounts Service" },
-  { id: 37, name: "Samarendra Behera", branch: "CS", passingYear: "1994", jobProfile: "General Manager, Rourkela steel plant" },
-  { id: 38, name: "Ashish Agarwal", branch: "EC", passingYear: "1989", jobProfile: "Senior Technical Director at NIC" },
-  { id: 39, name: "Nidhi Srivastava", branch: "CS", passingYear: "1989", jobProfile: "Vice President and Global Head of Google Business Unit at Tata Consultancy Services" },
-  { id: 40, name: "Ranveer Verma", branch: "B. Tech", passingYear: "1988", jobProfile: "Vice President Wells Fargo" },
-  { id: 41, name: "R K Singh", branch: "B. Tech", passingYear: "1993", jobProfile: "Regional Officer, NHAI, Andhra Pradesh" },
-  { id: 42, name: "Amit Khare", branch: "B. Tech", passingYear: "1989", jobProfile: "Chief Executive Officer at Evolko Systems Inc" },
-  { id: 43, name: "Sandeep Arora", branch: "EE", passingYear: "1997", jobProfile: "Sr Vice President Transmission & Markets, REV Renewables" },
-  { id: 44, name: "Dr Rakhi Gupta", branch: "CS", passingYear: "1993", jobProfile: "Head and Coordinator, I.T Department, KC College, HSNC University" },
-  { id: 45, name: "Pawan Agarwal", branch: "EE", passingYear: "1993", jobProfile: "Managing Director, Naini Papers Limited" },
-  { id: 46, name: "Sanjay Agrawal", branch: "EC", passingYear: "1988", jobProfile: "CTO & Head Presales at Hitachi Vantra" },
-  { id: 47, name: "Shashi Katiyar", branch: "CS", passingYear: "1989", jobProfile: "Senior Manager, Intel Corporation" },
-  { id: 48, name: "Sh. Vivek C. Verma", branch: "ME", passingYear: "1989", jobProfile: "CEO, UIDAI" }
+  { id: 1, name: "Yash Kateria", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "DDG DoT", image: "Yash_Kateria.jpeg", isTopAlumni: true, rank: 1 },
+  { id: 2, name: "Lallan Babu", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "Govt Sector", image: null, isTopAlumni: false },
+  { id: 3, name: "Dr. Anita Yadav", branch: "Computer Engineering", branchCode: "CS", passingYear: "1988", jobProfile: "Professor, Research Guide, Project guiden, subject expert in various selection committee of NITs, NSUT etc, Advisory committee in various International Conferences and various other technical committees", image: null, isTopAlumni: false },
+  { id: 4, name: "Dr. Renu Lata Rajni", branch: "Computer Engineering", branchCode: "CS", passingYear: "1988", jobProfile: "Director, Destue Bank", image: "renu_rajani.jpeg", isTopAlumni: false },
+  { id: 5, name: "Pankaj Aswal", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "Sr. Vice Chairman, Intel corp USA", image: "pankaj_aswal.jpeg", isTopAlumni: true, rank: 2 },
+  { id: 6, name: "Prof. Sanjany Kumar Singh", branch: "Not Specified", branchCode: "", passingYear: "", jobProfile: "Professor IIM Lucknow", image: null, isTopAlumni: false },
+  { id: 7, name: "Prof. D . K. Lobiyal", branch: "Computer Engineering", branchCode: "CS", passingYear: "1988", jobProfile: "Prof. in JNU", image: "dk_lobiyal.jpeg", isTopAlumni: false },
+  { id: 8, name: "Anil Gupta", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1989", jobProfile: "CGM ordinance Factory", image: null, isTopAlumni: false },
+  { id: 9, name: "DC Gupta", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1988", jobProfile: "GM BHEL", image: null, isTopAlumni: false },
+  { id: 10, name: "Ashish Kumar Shrivstav", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "GM AAI", image: null, isTopAlumni: false },
+  { id: 11, name: "Vivek Chandra Verma", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1989", jobProfile: "An Indian Ordnance Factory Officer of 1991 batch, under Ministry of Defence. Empanelled as Joint Secretary in Government of India. Presently working at UIDAI Headquarters, New Delhi.", image: "vivek_chandra_verma.jpeg", isTopAlumni: true, rank: 3 },
+  { id: 12, name: "Asif Siddiqui", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1990", jobProfile: "General Manager ISRO", image: "asif_siddiqui.jpeg", isTopAlumni: true, rank: 4 },
+  { id: 13, name: "Manish Jain", branch: "Civil Engineering", branchCode: "CE", passingYear: "1990", jobProfile: "1995 batch IAS Officer, West Bengal cadre, Principal Secretary, School Education", image: "manish_jain.jpeg", isTopAlumni: false, rank: 5 },
+  { id: 14, name: "Alok Katiyar", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1990", jobProfile: "Director, National High Speed Rail Corporation Ltd", image: null, isTopAlumni: false },
+  { id: 15, name: "Navin Kumar", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1991", jobProfile: "Joint Secretary, Ministry of Railways", image: "navin_kumar.jpeg", isTopAlumni: false },
+  { id: 16, name: "Pradeep Mishra", branch: "Civil Engineering", branchCode: "CE", passingYear: "1991", jobProfile: "Founder and CMD of REPL, a company related with urban development and infrastructure consulting", image: "pradeep_mishra.jpeg", isTopAlumni: false },
+  { id: 17, name: "Dhananjay Singh", branch: "Civil Engineering", branchCode: "CE", passingYear: "1991", jobProfile: "JS in Ministry of Railways", image: null, isTopAlumni: false },
+  { id: 18, name: "Dayapatra Nevatia", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1991", jobProfile: "President & Chief Operating Officer, Infogain", image: "dayapatra_nevatia.jpeg", isTopAlumni: false },
+  { id: 19, name: "Ram Naresh Singh", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1991", jobProfile: "Public Service", image: null, isTopAlumni: false },
+  { id: 20, name: "Vikas Gupta", branch: "Mechanical Engineering (Robotics)", branchCode: "MR", passingYear: "1992", jobProfile: "In active Politics and a Minister", image: "vikas_gupta.jpg", isTopAlumni: false },
+  { id: 21, name: "Sharat Sinha", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1992", jobProfile: "CEO Airtel Business", image: "sharat_sinha.jpeg", isTopAlumni: false },
+  { id: 22, name: "Dr Vinay Prakash", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1993", jobProfile: "Director at Adani Enterprises & ACC, CEO Adani Natural Resources", image: "vinay_prakash.jpeg", isTopAlumni: false },
+  { id: 23, name: "Nitish Sinha", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1994", jobProfile: "Joint Secretary Level Officer in Government of India", image: null, isTopAlumni: false },
+  { id: 24, name: "Samir Kumar", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1994", jobProfile: "CXO (Group Chief Shared Services officer) in QBE Insurance, the largest Australian and one of the largest in the world. Previously Managing Director in JP Morgan Chase bank and Deutsche bank in global roles.", image: "samir_kumar.jpeg", isTopAlumni: false },
+  { id: 25, name: "Lokesh Singh", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1995", jobProfile: "General Manager, Centre for Railway Information Systems, Ministry of Railways", image: "lokesh_singh.jpeg", isTopAlumni: false },
+  { id: 26, name: "Tej Pratap Narayan", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1998", jobProfile: "JS in Ministry of Railway", image: "tej_pratap_narayan.jpeg", isTopAlumni: false },
+  { id: 27, name: "Siddhartha Rungta", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1999", jobProfile: "Country Head HSBC", image: "siddharth_rungta.jpeg", isTopAlumni: false },
+  { id: 28, name: "Srijan Pal Singh", branch: "Electrical Engineering", branchCode: "EE", passingYear: "2006", jobProfile: "Chairperson Dr. APJ Abdul Kalam Centre", image: "srijan_pal_singh.jpeg", isTopAlumni: false },
+  { id: 29, name: "Laxmi Singh", branch: "Not Specified", branchCode: "", passingYear: "", jobProfile: "IPS", image: "laxmi_singh.jpeg", isTopAlumni: false },
+  { id: 30, name: "Niharika Bhatt", branch: "Electronics & Telecommunication Engineering", branchCode: "E&T", passingYear: "2011", jobProfile: "IPS", image: "niharika_bhatt.jpeg", isTopAlumni: false },
+  { id: 31, name: "Bandana Sinha", branch: "Computer Engineering", branchCode: "CS", passingYear: "1989", jobProfile: "Global Delivery head, Business Analytics - Life science, healthcare and public services, TCS.", image: "bandana_sinha.jpeg", isTopAlumni: false },
+  { id: 32, name: "Avinash Kumar Singh", branch: "Electrical Engineering", branchCode: "EE", passingYear: "2007", jobProfile: "IFS 2012, Presently in Nepal Embassy", image: "avinash_kumar_singh.jpeg", isTopAlumni: false },
+  { id: 33, name: "Roopal Saxena", branch: "Computer Engineering", branchCode: "CS", passingYear: "1988", jobProfile: "Vice President, Citizens Bank", image: null, isTopAlumni: false },
+  { id: 34, name: "Bhaskar Srivastava", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1989", jobProfile: "CTO, Reliance JIO", image: "bhasker_shrivastav.jpeg", isTopAlumni: false },
+  { id: 35, name: "Upendra Singh", branch: "Computer Engineering", branchCode: "CS", passingYear: "1991", jobProfile: "Managing Director, Data Architecture at State Street", image: "upendra_singh.jpeg", isTopAlumni: false },
+  { id: 36, name: "Pooja Bhat", branch: "Not Specified", branchCode: "", passingYear: "2010", jobProfile: "Indian Defense Accounts Service", image: "pooja_bhat.jpeg", isTopAlumni: false },
+  { id: 37, name: "Samarendra Behera", branch: "Computer Engineering", branchCode: "CS", passingYear: "1994", jobProfile: "General Manager, Rourkela steel plant", image: null, isTopAlumni: false },
+  { id: 38, name: "Ashish Agarwal", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1989", jobProfile: "Senior Technical Director at NIC", image: "ashish_agarwal.jpeg", isTopAlumni: false },
+  { id: 39, name: "Nidhi Srivastava", branch: "Computer Engineering", branchCode: "CS", passingYear: "1989", jobProfile: "Vice President and Global Head of Google Business Unit at Tata Consultancy Services", image: "nidhi_srivastav.jpeg", isTopAlumni: false },
+  { id: 40, name: "Ranveer Verma", branch: "Bachelor of Technology", branchCode: "B. Tech", passingYear: "1988", jobProfile: "Vice President Wells Fargo", image: null, isTopAlumni: false },
+  { id: 41, name: "R K Singh", branch: "Bachelor of Technology", branchCode: "B. Tech", passingYear: "1993", jobProfile: "Regional Officer, NHAI, Andhra Pradesh", image: "rk_singh.jpeg", isTopAlumni: false },
+  { id: 42, name: "Amit Khare", branch: "Bachelor of Technology", branchCode: "B. Tech", passingYear: "1989", jobProfile: "Chief Executive Officer at Evolko Systems Inc", image: null, isTopAlumni: false },
+  { id: 43, name: "Sandeep Arora", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1997", jobProfile: "Sr Vice President Transmission & Markets, REV Renewables", image: "sandeep_arora.jpeg", isTopAlumni: false },
+  { id: 44, name: "Dr Rakhi Gupta", branch: "Computer Engineering", branchCode: "CS", passingYear: "1993", jobProfile: "Head and Coordinator, I.T Department, KC College, HSNC University", image: "rakhi_gupta.jpeg", isTopAlumni: false },
+  { id: 45, name: "Pawan Agarwal", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1993", jobProfile: "Managing Director, Naini Papers Limited", image: "pawan_agarwal.jpeg", isTopAlumni: false },
+  { id: 46, name: "Sanjay Agrawal", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "CTO & Head Presales at Hitachi Vantra", image: "sanjay_agarwal.jpeg", isTopAlumni: false },
+  { id: 47, name: "Shashi Katiyar", branch: "Computer Engineering", branchCode: "CS", passingYear: "1989", jobProfile: "Senior Manager, Intel Corporation", image: null, isTopAlumni: false },
+  { id: 48, name: "Vivek Verma", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1989", jobProfile: "CEO, UIDAI", image: "Vivek_Verma.jpeg", isTopAlumni: false }
 ];
 
-// Featured alumni for spotlight section (first 4 from the list)
-const featuredAlumni = allAlumniData.slice(0, 4);
+// Get top alumni (ranked)
+const topAlumni = allAlumniData.filter(alumni => alumni.isTopAlumni).sort((a, b) => (a.rank || 99) - (b.rank || 99));
 
 const AlumniDirectory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [imageErrors, setImageErrors] = useState({});
   const itemsPerPage = 12;
 
   // Get unique branches and years for filters
-  const branches = [...new Set(allAlumniData.map(a => a.branch).filter(b => b))];
-  const years = [...new Set(allAlumniData.map(a => a.passingYear).filter(y => y))].sort();
+  const branches = [...new Set(allAlumniData.map(a => a.branchCode).filter(b => b && b !== ''))].sort();
+  const years = [...new Set(allAlumniData.map(a => a.passingYear).filter(y => y && y !== ''))].sort((a, b) => Number(b) - Number(a));
 
   // Filter alumni based on search and filters
   const filteredAlumni = allAlumniData.filter(alumni => {
     const matchesSearch = alumni.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          alumni.jobProfile.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesBranch = !selectedBranch || alumni.branch === selectedBranch;
+      alumni.jobProfile.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesBranch = !selectedBranch || alumni.branchCode === selectedBranch;
     const matchesYear = !selectedYear || alumni.passingYear === selectedYear;
     return matchesSearch && matchesBranch && matchesYear;
   });
@@ -86,14 +87,23 @@ const AlumniDirectory = () => {
   );
 
   // Reset page when filters change
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedBranch, selectedYear]);
+
+  const handleImageError = (alumniId) => {
+    setImageErrors(prev => ({ ...prev, [alumniId]: true }));
+  };
+
+  const getImagePath = (imageName) => {
+    if (!imageName) return null;
+    return `/images/Alumnis/${imageName}`;
+  };
 
   return (
     <main className="bg-white min-h-screen pb-20">
       {/* HEADER SECTION */}
-      <section className="bg-[#951114] text-white py-20 px-6 md:px-24">
+      <section className="bg-gradient-to-r from-[#951114] to-[#6d0c0f] text-white py-20 px-6 md:px-24">
         <div className="max-w-6xl mx-auto">
           <p className="text-sm font-black uppercase tracking-[0.3em] opacity-70 mb-4">
             Our Distinguished Alumni
@@ -102,37 +112,61 @@ const AlumniDirectory = () => {
             IET Lucknow Alumni Directory
           </h1>
           <p className="text-xl md:text-2xl font-light max-w-3xl opacity-90">
-            Celebrating the outstanding alumni of IET Lucknow — graduates who are leading industries, 
+            Celebrating the outstanding alumni of IET Lucknow — graduates who are leading industries,
             shaping national policy, and inspiring every engineer who walks these halls.
           </p>
         </div>
       </section>
 
-      {/* FEATURED SPOTLIGHTS */}
-      <section className="max-w-7xl bg-white mx-auto mt-10 px-6 mb-16">
-        <h2 className="text-3xl font-bold text-slate-900 mb-8 flex items-center gap-3">
-          <GraduationCap className="text-[#951114]" size={32} />
-          Featured Alumni Spotlights
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {featuredAlumni.map((alumni, idx) => (
-            <div key={idx} className="bg-white shadow-xl overflow-hidden border border-slate-100 rounded-lg">
-              <div className="p-6">
-                <div className="flex items-center gap-2 text-[#951114] font-bold tracking-widest uppercase text-xs mb-3">
-                  <GraduationCap size={16} />
-                  {alumni.branch || 'Engineering'} | Batch of {alumni.passingYear || 'N/A'}
-                </div>
-                <h3 style={{ fontFamily: "Playfair Display" }} className="text-2xl font-bold text-slate-900 mb-1">
-                  {alumni.name}
-                </h3>
-                <p className="text-slate-700 font-medium mb-4 line-clamp-2">
-                  {alumni.jobProfile}
-                </p>
-              </div>
+      {/* TOP ALUMNI HIGHLIGHTS */}
+      {topAlumni.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 -mt-12 mb-16">
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl shadow-xl p-8 border border-amber-200">
+            <div className="flex items-center gap-3 mb-8">
+              <Award className="text-amber-600" size={32} />
+              <h2 className="text-3xl font-bold text-slate-900">Top Distinguished Alumni</h2>
+              <div className="h-px flex-1 bg-gradient-to-r from-amber-300 to-transparent"></div>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {topAlumni.map((alumni, idx) => (
+                <div key={idx} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-amber-200">
+                  <div className="relative">
+                    {/* Image Container */}
+                    <div className="relative h-64 w-full bg-gradient-to-br from-amber-100 to-orange-100">
+                      {alumni.image && !imageErrors[`top-${alumni.id}`] ? (
+                        <Image
+                          src={getImagePath(alumni.image)}
+                          alt={alumni.name}
+                          fill
+                          className="object-cover"
+                          onError={() => handleImageError(`top-${alumni.id}`)}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="text-center">
+                            <GraduationCap size={64} className="text-amber-400 mx-auto mb-2" />
+                            <p className="text-amber-600 font-medium">{alumni.name}</p>
+                          </div>
+                        </div>
+                      )}
+                      {/* Overlay gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 text-amber-600 font-bold tracking-widest uppercase text-xs mb-2">
+                      <GraduationCap size={14} />
+                      {alumni.branchCode || 'Engineering'} • Batch {alumni.passingYear || 'N/A'}
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">{alumni.name}</h3>
+                    <p className="text-slate-600 text-sm line-clamp-3">{alumni.jobProfile}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* DIRECTORY SECTION */}
       <section className="max-w-7xl mx-auto px-6">
@@ -152,7 +186,7 @@ const AlumniDirectory = () => {
                 placeholder="Search by name or profile..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#951114] focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#951114] focus:border-transparent bg-white"
               />
             </div>
 
@@ -163,7 +197,7 @@ const AlumniDirectory = () => {
               className="px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#951114] bg-white"
             >
               <option value="">All Branches</option>
-              {branches.sort().map(branch => (
+              {branches.map(branch => (
                 <option key={branch} value={branch}>{branch}</option>
               ))}
             </select>
@@ -183,12 +217,24 @@ const AlumniDirectory = () => {
         </div>
 
         {/* RESULTS COUNT */}
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
           <p className="text-slate-600">
             Showing <span className="font-bold text-slate-900">{filteredAlumni.length}</span> alumni
             {selectedBranch && ` in ${selectedBranch}`}
             {selectedYear && ` from batch of ${selectedYear}`}
           </p>
+          {(searchTerm || selectedBranch || selectedYear) && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedBranch('');
+                setSelectedYear('');
+              }}
+              className="text-[#951114] text-sm font-medium hover:underline"
+            >
+              Clear all filters
+            </button>
+          )}
         </div>
 
         {/* ALUMNI GRID */}
@@ -196,19 +242,45 @@ const AlumniDirectory = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedAlumni.map((alumni) => (
-                <div key={alumni.id} className="bg-white border border-slate-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 text-[#951114] font-bold tracking-widest uppercase text-xs mb-2">
-                        <GraduationCap size={14} />
-                        {alumni.branch || 'Engineering'} • Batch {alumni.passingYear || 'N/A'}
+                <div key={alumni.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 group">
+                  {/* Alumni Image */}
+                  <div className="relative h-56 w-full bg-gradient-to-br from-slate-100 to-slate-200">
+                    {alumni.image && !imageErrors[alumni.id] ? (
+                      <Image
+                        src={getImagePath(alumni.image)}
+                        alt={alumni.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={() => handleImageError(alumni.id)}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <GraduationCap size={56} className="text-slate-400 mx-auto mb-2" />
+                          <p className="text-slate-500 text-sm font-medium">{alumni.name}</p>
+                        </div>
                       </div>
-                      <h3 className="text-xl font-bold text-slate-900">{alumni.name}</h3>
+                    )}
+                  </div>
+
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 text-[#951114] font-bold tracking-widest uppercase text-xs mb-2">
+                      <GraduationCap size={14} />
+                      {alumni.branch || 'Engineering'} • Batch {alumni.passingYear || 'N/A'}
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-[#951114] transition-colors">
+                      {alumni.name}
+                    </h3>
+                    <p className="text-slate-600 text-sm line-clamp-3">
+                      {alumni.jobProfile}
+                    </p>
+                    <div className="mt-4 pt-3 border-t border-slate-100">
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <Briefcase size={14} />
+                        <span>Current Position</span>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-slate-700 text-sm line-clamp-3 mb-4">
-                    {alumni.jobProfile}
-                  </p>
                 </div>
               ))}
             </div>
@@ -239,11 +311,10 @@ const AlumniDirectory = () => {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-                          currentPage === pageNum
-                            ? 'bg-[#951114] text-white'
-                            : 'border border-slate-300 hover:bg-slate-50'
-                        }`}
+                        className={`w-10 h-10 rounded-lg font-medium transition-colors ${currentPage === pageNum
+                          ? 'bg-[#951114] text-white'
+                          : 'border border-slate-300 hover:bg-slate-50'
+                          }`}
                       >
                         {pageNum}
                       </button>
@@ -261,7 +332,7 @@ const AlumniDirectory = () => {
             )}
           </>
         ) : (
-          <div className="text-center py-12">
+          <div className="text-center py-12 bg-slate-50 rounded-lg">
             <p className="text-slate-500 text-lg">No alumni found matching your criteria.</p>
             <button
               onClick={() => {
