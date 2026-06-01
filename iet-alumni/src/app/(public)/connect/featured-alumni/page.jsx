@@ -124,7 +124,7 @@ const AlumniDirectory = () => {
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl shadow-xl p-8 border border-amber-200">
             <div className="flex items-center gap-3 mb-8">
               <Award className="text-amber-600" size={32} />
-              <h2 className="text-3xl font-bold text-slate-900">Top Distinguished Alumni</h2>
+              <h2 className="text-3xl font-bold text-slate-900">Featured Alumni</h2>
               <div className="h-px flex-1 bg-gradient-to-r from-amber-300 to-transparent"></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -138,7 +138,7 @@ const AlumniDirectory = () => {
                           src={getImagePath(alumni.image)}
                           alt={alumni.name}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           onError={() => handleImageError(`top-${alumni.id}`)}
                         />
                       ) : (
@@ -240,7 +240,7 @@ const AlumniDirectory = () => {
         {/* ALUMNI GRID */}
         {filteredAlumni.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {paginatedAlumni.map((alumni) => (
                 <div key={alumni.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 group">
                   {/* Alumni Image */}
@@ -250,7 +250,7 @@ const AlumniDirectory = () => {
                         src={getImagePath(alumni.image)}
                         alt={alumni.name}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="object-contain group-hover:scale-105 transition-transform duration-300"
                         onError={() => handleImageError(alumni.id)}
                       />
                     ) : (
@@ -264,9 +264,14 @@ const AlumniDirectory = () => {
                   </div>
 
                   <div className="p-5">
-                    <div className="flex items-center gap-2 text-[#951114] font-bold tracking-widest uppercase text-xs mb-2">
-                      <GraduationCap size={14} />
-                      {alumni.branch || 'Engineering'} • Batch {alumni.passingYear || 'N/A'}
+                    <div className="mb-2">
+                      <div className="flex items-center gap-2 text-[#951114] font-bold tracking-widest uppercase text-xs mb-1">
+                        <GraduationCap size={14} />
+                        {alumni.branch || 'Engineering'}
+                      </div>
+                      <div className="text-[#951114] font-bold tracking-widest uppercase text-xs">
+                        Batch {alumni.passingYear || 'N/A'}
+                      </div>
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-[#951114] transition-colors">
                       {alumni.name}
