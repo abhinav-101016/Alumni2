@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Linkedin, ExternalLink, GraduationCap, Search, ChevronLeft, ChevronRight, Star, Briefcase, Calendar, Award } from 'lucide-react';
 
-// Full alumni data with image mappings
+// Full alumni data with image mappings (CORRECTED & UPDATED)
 const allAlumniData = [
   { id: 1, name: "Yash Kateria", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "DDG DoT", image: "Yash_Kateria.jpeg", isTopAlumni: true, rank: 1 },
   { id: 2, name: "Lallan Babu", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "Govt Sector", image: null, isTopAlumni: false },
@@ -16,25 +16,25 @@ const allAlumniData = [
   { id: 9, name: "DC Gupta", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1988", jobProfile: "GM BHEL", image: null, isTopAlumni: false },
   { id: 10, name: "Ashish Kumar Shrivstav", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "GM AAI", image: null, isTopAlumni: false },
   { id: 11, name: "Vivek Chandra Verma", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1989", jobProfile: "An Indian Ordnance Factory Officer of 1991 batch, under Ministry of Defence. Empanelled as Joint Secretary in Government of India. Presently working at UIDAI Headquarters, New Delhi.", image: "vivek_chandra_verma.jpeg", isTopAlumni: true, rank: 3 },
-  { id: 12, name: "Asif Siddiqui", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1990", jobProfile: "General Manager ISRO", image: "asif_siddiqui.jpeg", isTopAlumni: true, rank: 4 },
+  { id: 12, name: "Asif Siddiqui", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1990", jobProfile: "General Manager, ISRO Telemetry, Tracking and Command Network (ISTRAC). Serving for 34 years in ISRO.", image: "asif_siddiqui.jpeg", isTopAlumni: true, rank: 4 },
   { id: 13, name: "Manish Jain", branch: "Civil Engineering", branchCode: "CE", passingYear: "1990", jobProfile: "1995 batch IAS Officer, West Bengal cadre, Principal Secretary, School Education", image: "manish_jain.jpeg", isTopAlumni: false, rank: 5 },
   { id: 14, name: "Alok Katiyar", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1990", jobProfile: "Director, National High Speed Rail Corporation Ltd", image: null, isTopAlumni: false },
-  { id: 15, name: "Navin Kumar", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1991", jobProfile: "Joint Secretary, Ministry of Railways", image: "navin_kumar.jpeg", isTopAlumni: false },
+  { id: 15, name: "Navin Kumar", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1991", jobProfile: "Director (Rolling Stock & Systems), Uttar Pradesh Metro Rail Corporation (UPMRC). Former Joint Secretary, Ministry of Railways.", image: "navin_kumar.jpeg", isTopAlumni: true },
   { id: 16, name: "Pradeep Mishra", branch: "Civil Engineering", branchCode: "CE", passingYear: "1991", jobProfile: "Founder and CMD of REPL, a company related with urban development and infrastructure consulting", image: "pradeep_mishra.jpeg", isTopAlumni: false },
   { id: 17, name: "Dhananjay Singh", branch: "Civil Engineering", branchCode: "CE", passingYear: "1991", jobProfile: "JS in Ministry of Railways", image: null, isTopAlumni: false },
   { id: 18, name: "Dayapatra Nevatia", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1991", jobProfile: "President & Chief Operating Officer, Infogain", image: "dayapatra_nevatia.jpeg", isTopAlumni: false },
   { id: 19, name: "Ram Naresh Singh", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1991", jobProfile: "Public Service", image: null, isTopAlumni: false },
-  { id: 20, name: "Vikas Gupta", branch: "Mechanical Engineering (Robotics)", branchCode: "MR", passingYear: "1992", jobProfile: "In active Politics and a Minister", image: "vikas_gupta.jpg", isTopAlumni: false },
+  { id: 20, name: "Vikas Gupta", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1993", jobProfile: "In active Politics and a Minister", image: "vikas_gupta.jpg", isTopAlumni: false },
   { id: 21, name: "Sharat Sinha", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1992", jobProfile: "CEO Airtel Business", image: "sharat_sinha.jpeg", isTopAlumni: false },
   { id: 22, name: "Dr Vinay Prakash", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1993", jobProfile: "Director at Adani Enterprises & ACC, CEO Adani Natural Resources", image: "vinay_prakash.jpeg", isTopAlumni: false },
-  { id: 23, name: "Nitish Sinha", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1994", jobProfile: "Joint Secretary Level Officer in Government of India", image: null, isTopAlumni: false },
+  { id: 23, name: "Nitish Sinha", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1994", jobProfile: "IES (1995), Additional General Manager (PGM), BSNL. Former ADG, UIDAI, Government of India.", image: "nitish_sinha.png", isTopAlumni: true },
   { id: 24, name: "Samir Kumar", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1994", jobProfile: "CXO (Group Chief Shared Services officer) in QBE Insurance, the largest Australian and one of the largest in the world. Previously Managing Director in JP Morgan Chase bank and Deutsche bank in global roles.", image: "samir_kumar.jpeg", isTopAlumni: false },
   { id: 25, name: "Lokesh Singh", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1995", jobProfile: "General Manager, Centre for Railway Information Systems, Ministry of Railways", image: "lokesh_singh.jpeg", isTopAlumni: false },
   { id: 26, name: "Tej Pratap Narayan", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1998", jobProfile: "JS in Ministry of Railway", image: "tej_pratap_narayan.jpeg", isTopAlumni: false },
   { id: 27, name: "Siddhartha Rungta", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1999", jobProfile: "Country Head HSBC", image: "siddharth_rungta.jpeg", isTopAlumni: false },
   { id: 28, name: "Srijan Pal Singh", branch: "Electrical Engineering", branchCode: "EE", passingYear: "2006", jobProfile: "Chairperson Dr. APJ Abdul Kalam Centre", image: "srijan_pal_singh.jpeg", isTopAlumni: false },
-  { id: 29, name: "Laxmi Singh", branch: "Not Specified", branchCode: "", passingYear: "", jobProfile: "IPS", image: "laxmi_singh.jpeg", isTopAlumni: false },
-  { id: 30, name: "Niharika Bhatt", branch: "Electronics & Telecommunication Engineering", branchCode: "E&T", passingYear: "2011", jobProfile: "IPS", image: "niharika_bhatt.jpeg", isTopAlumni: false },
+  { id: 29, name: "Laxmi Singh", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1997", jobProfile: "IPS Officer", image: "laxmi_singh.jpeg", isTopAlumni: false },
+  { id: 30, name: "Niharika Bhatt", branch: "Electronics & Telecommunication Engineering", branchCode: "E&T", passingYear: "2011", jobProfile: "IPS Officer", image: "niharika_bhatt.jpeg", isTopAlumni: false },
   { id: 31, name: "Bandana Sinha", branch: "Computer Engineering", branchCode: "CS", passingYear: "1989", jobProfile: "Global Delivery head, Business Analytics - Life science, healthcare and public services, TCS.", image: "bandana_sinha.jpeg", isTopAlumni: false },
   { id: 32, name: "Avinash Kumar Singh", branch: "Electrical Engineering", branchCode: "EE", passingYear: "2007", jobProfile: "IFS 2012, Presently in Nepal Embassy", image: "avinash_kumar_singh.jpeg", isTopAlumni: false },
   { id: 33, name: "Roopal Saxena", branch: "Computer Engineering", branchCode: "CS", passingYear: "1988", jobProfile: "Vice President, Citizens Bank", image: null, isTopAlumni: false },
@@ -52,10 +52,17 @@ const allAlumniData = [
   { id: 45, name: "Pawan Agarwal", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1993", jobProfile: "Managing Director, Naini Papers Limited", image: "pawan_agarwal.jpeg", isTopAlumni: false },
   { id: 46, name: "Sanjay Agrawal", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "CTO & Head Presales at Hitachi Vantra", image: "sanjay_agarwal.jpeg", isTopAlumni: false },
   { id: 47, name: "Shashi Katiyar", branch: "Computer Engineering", branchCode: "CS", passingYear: "1989", jobProfile: "Senior Manager, Intel Corporation", image: null, isTopAlumni: false },
-  { id: 48, name: "Vivek Verma", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1989", jobProfile: "CEO, UIDAI", image: "Vivek_Verma.jpeg", isTopAlumni: false }
+
+  // ==================== NEW ALUMNI ADDITIONS WITH IMAGES ====================
+  { id: 48, name: "Sanjay Garg", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1991", jobProfile: "IAS (KL 1994). Additional Secretary, Department of Agricultural Research & Education and Secretary, Indian Council of Agricultural Research. OSD, Bureau of Indian Standards (BIS).", image: "sanjay_garg.png", isTopAlumni: true, rank: 6 },
+  { id: 49, name: "K K Agarwal", branch: "Electronics & Communication Engineering", branchCode: "ECE", passingYear: "1988", jobProfile: "GM (Quality) at Bharat Electronics Limited (BEL), Bangalore", image: null, isTopAlumni: false },
+  { id: 50, name: "Suneeta Singh", branch: "Electronics & Communication Engineering", branchCode: "ECE", passingYear: "1989", jobProfile: "Retd. ADG (UP Police). Recipient of President's Medal (specifics to be confirmed).", image: null, isTopAlumni: false },
+  { id: 51, name: "Manoj Kumar Kala", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1988", jobProfile: "Chief General Manager at ONGC Videsh Ltd., New Delhi", image: null, isTopAlumni: false },
+  { id: 52, name: "Meenakshi Vashistha", branch: "Electronics & Communication Engineering", branchCode: "ECE", passingYear: "1988", jobProfile: "Founder & CEO, TekUncorked. Formerly with ISRO, C-Dot, Motorola, Freescale Semiconductor.", image: "meenakshi_vashist.jpg", isTopAlumni: true, rank: 7 },
+  { id: 53, name: "Biplab Baksi", branch: "Electronics & Communication Engineering", branchCode: "ECE", passingYear: "1989", jobProfile: "SR. Technical Director at NIC", image: "biplab_baksi.jpg", isTopAlumni: false }
 ];
 
-// Get top alumni (ranked)
+// Get top alumni (ranked) - Includes new additions Sanjay Garg and Meenakshi Vashistha
 const topAlumni = allAlumniData.filter(alumni => alumni.isTopAlumni).sort((a, b) => (a.rank || 99) - (b.rank || 99));
 
 const AlumniDirectory = () => {
