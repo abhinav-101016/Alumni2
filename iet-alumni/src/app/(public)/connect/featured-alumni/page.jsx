@@ -46,18 +46,18 @@ const allAlumniData = [
   { id: 39, name: "Nidhi Srivastava", branch: "Computer Engineering", branchCode: "CS", passingYear: "1989", jobProfile: "Vice President and Global Head of Google Business Unit at Tata Consultancy Services", image: "nidhi_srivastav.jpeg", isTopAlumni: false },
   { id: 40, name: "Ranveer Verma", branch: "Bachelor of Technology", branchCode: "B. Tech", passingYear: "1988", jobProfile: "Vice President Wells Fargo", image: null, isTopAlumni: false },
   { id: 41, name: "R K Singh", branch: "Bachelor of Technology", branchCode: "B. Tech", passingYear: "1993", jobProfile: "Regional Officer, NHAI, Andhra Pradesh", image: "rk_singh.jpeg", isTopAlumni: false },
-  { id: 42, name: "Amit Khare", branch: "Bachelor of Technology", branchCode: "B. Tech", passingYear: "1989", jobProfile: "Chief Executive Officer at Evolko Systems Inc", image: null, isTopAlumni: false },
+  { id: 42, name: "Amit Khare", branch: "Bachelor of Technology", branchCode: "B. Tech", passingYear: "1989", jobProfile: "Chief Executive Officer at Evolko Systems Inc", image: "amit_khare.jpg", isTopAlumni: false },
   { id: 43, name: "Sandeep Arora", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1997", jobProfile: "Sr Vice President Transmission & Markets, REV Renewables", image: "sandeep_arora.jpeg", isTopAlumni: false },
   { id: 44, name: "Dr Rakhi Gupta", branch: "Computer Engineering", branchCode: "CS", passingYear: "1993", jobProfile: "Head and Coordinator, I.T Department, KC College, HSNC University", image: "rakhi_gupta.jpeg", isTopAlumni: false },
   { id: 45, name: "Pawan Agarwal", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1993", jobProfile: "Managing Director, Naini Papers Limited", image: "pawan_agarwal.jpeg", isTopAlumni: false },
   { id: 46, name: "Sanjay Agrawal", branch: "Electronics Engineering", branchCode: "EC", passingYear: "1988", jobProfile: "CTO & Head Presales at Hitachi Vantra", image: "sanjay_agarwal.jpeg", isTopAlumni: false },
-  { id: 47, name: "Shashi Katiyar", branch: "Computer Engineering", branchCode: "CS", passingYear: "1989", jobProfile: "Senior Manager, Intel Corporation", image: null, isTopAlumni: false },
+  { id: 47, name: "Shashi Katiyar", branch: "Computer Engineering", branchCode: "CS", passingYear: "1989", jobProfile: "Senior Manager, Intel Corporation", image: "shashi_katiyar.png", isTopAlumni: false },
 
   // ==================== NEW ALUMNI ADDITIONS WITH IMAGES ====================
   { id: 48, name: "Sanjay Garg", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1991", jobProfile: "IAS (KL 1994). Additional Secretary, Department of Agricultural Research & Education and Secretary, Indian Council of Agricultural Research. OSD, Bureau of Indian Standards (BIS).", image: "sanjay_garg.png", isTopAlumni: true, rank: 6 },
   { id: 49, name: "K K Agarwal", branch: "Electronics & Communication Engineering", branchCode: "ECE", passingYear: "1988", jobProfile: "GM (Quality) at Bharat Electronics Limited (BEL), Bangalore", image: null, isTopAlumni: false },
   { id: 50, name: "Suneeta Singh", branch: "Electronics & Communication Engineering", branchCode: "ECE", passingYear: "1989", jobProfile: "Retd. ADG (UP Police). Recipient of President's Medal (specifics to be confirmed).", image: null, isTopAlumni: false },
-  { id: 51, name: "Manoj Kumar Kala", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1988", jobProfile: "Chief General Manager at ONGC Videsh Ltd., New Delhi", image: null, isTopAlumni: false },
+  { id: 51, name: "Manoj Kumar Kala", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1988", jobProfile: "Chief General Manager at ONGC Videsh Ltd., New Delhi", image: "manoj_kumar.jpg", isTopAlumni: false },
   { id: 52, name: "Meenakshi Vashistha", branch: "Electronics & Communication Engineering", branchCode: "ECE", passingYear: "1988", jobProfile: "Founder & CEO, TekUncorked. Formerly with ISRO, C-Dot, Motorola, Freescale Semiconductor.", image: "meenakshi_vashist.jpg", isTopAlumni: true, rank: 7 },
   { id: 53, name: "Biplab Baksi", branch: "Electronics & Communication Engineering", branchCode: "ECE", passingYear: "1989", jobProfile: "SR. Technical Director at NIC", image: "biplab_baksi.jpg", isTopAlumni: false }
 ];

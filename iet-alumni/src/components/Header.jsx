@@ -243,7 +243,7 @@ export default function Header() {
         transition-all duration-500 ease-in-out
         ${scrolled 
           ? "opacity-0 pointer-events-none translate-y-[-100%] max-h-0 py-0" 
-          : "opacity-100 pointer-events-auto translate-y-0 max-h-20 py-2"
+          : "opacity-100 pointer-events-auto translate-y-0 max-h-10 py-2"
         }
       `}>
         <div className="max-w-[1600px] mx-auto px-12 flex justify-end gap-6 font-bold uppercase tracking-widest items-center">
@@ -276,7 +276,7 @@ export default function Header() {
       <nav
         onMouseEnter={() => { if (typeof window !== "undefined" && window.innerWidth >= 1024) setHoverNav(true) }}
         onMouseLeave={() => { setHoverNav(false); setActive(null) }}
-        className={`transition-all duration-500 shadow-xl ${isLightMode ? "bg-white text-black" : "bg-[#951114] text-white"} ${scrolled ? "py-1" : "py-2"}`}
+        className={`transition-all duration-500 shadow-xl ${isLightMode ? "bg-white text-black" : "bg-[#951114] text-white"} ${scrolled ? "py-1" : "py-1"}`}
       >
         <div className="max-w-[1600px] mx-auto px-4 md:px-12 flex justify-between items-center">
 
