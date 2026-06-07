@@ -67,7 +67,7 @@ const allAlumniData = [
   { id: 56, name: "Rajeev Gupta", branch: "Electrical Engineering", branchCode: "EE", passingYear: "1989", jobProfile: "Chief Engineer, UPSEB (Uttar Pradesh State Electricity Board)", image: null, isTopAlumni: false, linkedin: null },
 
   // ==================== ADDITIONAL NEW ALUMNI ====================
-  { id: 57, name: "Pankaj Kumar Gupta", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1990", jobProfile: "GM & Head (Project) at NTPC, Kanti", image: "pankaj_kumar.jpeg", isTopAlumni: false, linkedin: "https://www.linkedin.com/in/pankaj-kumar-gupta-5a443b2b" },
+  { id: 57, name: "Pankaj Kumar Gupta", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1990", jobProfile: "GM & Head (Project) at NTPC, Kanti", image: "pankaj_kumar.jpg", isTopAlumni: false, linkedin: "https://www.linkedin.com/in/pankaj-kumar-gupta-5a443b2b" },
   { id: 58, name: "Avinash Chandra", branch: "Chemical Engineering", branchCode: "CHE", passingYear: "2000", jobProfile: "Head & Professor at Thapar University, Patiala", image: null, isTopAlumni: false, linkedin: null },
   { id: 59, name: "Sanjay Kumar", branch: "Mechanical Engineering", branchCode: "ME", passingYear: "1990", jobProfile: "Senior Executive at NTPC / Power Sector", image: "sanjay_kumar.jpg", isTopAlumni: false, linkedin: "https://www.linkedin.com/in/sanjay-kumar-a80b0619" }
 ];
