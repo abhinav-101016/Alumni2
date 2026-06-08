@@ -34,7 +34,7 @@ const ExecutiveCommittee = () => {
         "246/2B, Railway Officers Enclave, PK Road, New Delhi – 110001",
       occupation: "Government Service",
       image:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&h=400&fit=crop",
+        "/images/Alumnis/tej_pratap_narayan.jpeg",
       details: [
         "S/o Shri Ram Piarey.",
         "Assists the President in administrative matters.",
